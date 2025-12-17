@@ -94,20 +94,51 @@
 
                     <!-- 結果表示 -->
                     <div id="results" class="hidden border-t border-slate-100 pt-6 mt-6">
-                        <div class="grid grid-cols-3 gap-4 mb-6 text-center">
-                            <div class="p-3 bg-slate-50 rounded-lg">
-                                <div class="text-xs text-slate-400 mb-1">データ数</div>
-                                <div class="text-lg font-bold text-slate-800" id="rowCount">-</div>
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                            <!-- 統計情報 -->
+                            <div class="grid grid-cols-3 gap-4 text-center h-min">
+                                <div class="p-3 bg-slate-50 rounded-lg">
+                                    <div class="text-xs text-slate-400 mb-1">データ数</div>
+                                    <div class="text-lg font-bold text-slate-800" id="rowCount">-</div>
+                                </div>
+                                <div class="p-3 bg-slate-50 rounded-lg">
+                                    <div class="text-xs text-slate-400 mb-1">平均距離</div>
+                                    <div class="text-lg font-bold text-blue-600" id="avgValue">-</div>
+                                </div>
+                                <div class="p-3 bg-slate-50 rounded-lg">
+                                    <div class="text-xs text-slate-400 mb-1">最大距離</div>
+                                    <div class="text-lg font-bold text-green-600" id="maxValue">-</div>
+                                </div>
                             </div>
-                            <div class="p-3 bg-slate-50 rounded-lg">
-                                <div class="text-xs text-slate-400 mb-1">平均距離</div>
-                                <div class="text-lg font-bold text-blue-600" id="avgValue">-</div>
-                            </div>
-                            <div class="p-3 bg-slate-50 rounded-lg">
-                                <div class="text-xs text-slate-400 mb-1">最大距離</div>
-                                <div class="text-lg font-bold text-green-600" id="maxValue">-</div>
+
+                            <!-- NLOS円グラフ -->
+                            <div class="bg-slate-50 rounded-lg p-4 flex flex-col items-center justify-center">
+                                <h4 class="text-sm font-bold text-slate-600 mb-2">通信環境 (LOS / NLOS)</h4>
+                                <div class="relative h-48 w-full max-w-xs">
+                                    <canvas id="nlosChart"></canvas>
+                                </div>
                             </div>
                         </div>
+
+                        <!-- フィルターコントロール -->
+                        <div class="flex items-center gap-4 mb-4">
+                            <span class="text-sm font-medium text-slate-600">表示データ:</span>
+                            <div class="flex bg-slate-100 p-1 rounded-lg">
+                                <label class="cursor-pointer">
+                                    <input type="radio" name="filterMode" value="all" class="peer sr-only" checked onchange="updateLineChart()">
+                                    <span class="block px-3 py-1 text-sm rounded-md transition-all text-slate-500 peer-checked:bg-white peer-checked:text-blue-600 peer-checked:shadow-sm peer-checked:font-bold">全て</span>
+                                </label>
+                                <label class="cursor-pointer">
+                                    <input type="radio" name="filterMode" value="los" class="peer sr-only" onchange="updateLineChart()">
+                                    <span class="block px-3 py-1 text-sm rounded-md transition-all text-slate-500 peer-checked:bg-white peer-checked:text-blue-600 peer-checked:shadow-sm peer-checked:font-bold">LOSのみ</span>
+                                </label>
+                                <label class="cursor-pointer">
+                                    <input type="radio" name="filterMode" value="nlos" class="peer sr-only" onchange="updateLineChart()">
+                                    <span class="block px-3 py-1 text-sm rounded-md transition-all text-slate-500 peer-checked:bg-white peer-checked:text-blue-600 peer-checked:shadow-sm peer-checked:font-bold">NLOSのみ</span>
+                                </label>
+                            </div>
+                        </div>
+
                         <div class="relative h-96 w-full">
                             <canvas id="myChart"></canvas>
                         </div>
@@ -142,6 +173,8 @@
     <!-- 解析ロジック -->
     <script>
         let myChart = null;
+        let nlosChart = null;
+        let rawCsvData = [];
 
         function processCSV() {
             const fileInput = document.getElementById('csvFile');
@@ -171,7 +204,9 @@
                 return;
             }
 
-            const labels = data.map(row => row.time);
+            // Store raw data for filtering
+            rawCsvData = data;
+
             const distances = data.map(row => row.distance);
             const cleanDistances = distances.filter(d => typeof d === 'number');
 
@@ -184,8 +219,71 @@
             document.getElementById('avgValue').innerText = avg + " cm";
             document.getElementById('maxValue').innerText = max + " cm";
 
-            drawChart(labels, distances);
+            // Draw Pie Chart for NLOS
+            const losCount = data.filter(row => row.nlos === 0).length;
+            const nlosCount = data.filter(row => row.nlos === 1).length;
+            drawPieChart(losCount, nlosCount);
+
+            // Draw Line Chart (initial state based on checked radio)
+            updateLineChart();
+
             document.getElementById('results').classList.remove('hidden');
+        }
+
+        function drawPieChart(losCount, nlosCount) {
+            const ctx = document.getElementById('nlosChart').getContext('2d');
+
+            if (nlosChart) {
+                nlosChart.destroy();
+            }
+
+            nlosChart = new Chart(ctx, {
+                type: 'pie',
+                data: {
+                    labels: ['LOS (Line of Sight)', 'NLOS (Non-Line of Sight)'],
+                    datasets: [{
+                        data: [losCount, nlosCount],
+                        backgroundColor: [
+                            'rgba(59, 130, 246, 0.8)', // Blue-500
+                            'rgba(239, 68, 68, 0.8)'   // Red-500
+                        ],
+                        borderColor: [
+                            'rgba(59, 130, 246, 1)',
+                            'rgba(239, 68, 68, 1)'
+                        ],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                boxWidth: 12,
+                                font: { size: 10 }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateLineChart() {
+            const filterMode = document.querySelector('input[name="filterMode"]:checked').value;
+
+            let filteredData = rawCsvData;
+            if (filterMode === 'los') {
+                filteredData = rawCsvData.filter(row => row.nlos === 0);
+            } else if (filterMode === 'nlos') {
+                filteredData = rawCsvData.filter(row => row.nlos === 1);
+            }
+
+            const labels = filteredData.map(row => row.time);
+            const distances = filteredData.map(row => row.distance);
+
+            drawChart(labels, distances);
         }
 
         function drawChart(labels, dataPoints) {
