@@ -76,9 +76,13 @@
 
             // CSVを読み込む処理 (PapaParse使用)
             Papa.parse(file, {
-                header: true,      // 1行目を項目名として扱う
+                header: true,        // 1行目を項目名として扱う
                 dynamicTyping: true, // 数字を自動で数値として扱う
-                skipEmptyLines: true,
+                skipEmptyLines: true,// 空行をスキップ
+                // ★重要: 列名の前後の空白を削除する設定を追加しました
+                transformHeader: function(header) {
+                    return header.trim();
+                },
                 complete: function(results) {
                     // 読み込み完了！ results.data に中身が入っています
                     analyzeData(results.data);
@@ -86,33 +90,47 @@
             });
         }
 
-        // ▼▼▼ 御主人様が変更するべき「解析ロジック」はここです ▼▼▼
+        // ▼▼▼ 御主人様のデータに合わせて調整した解析ロジック ▼▼▼
         function analyzeData(data) {
             console.log("読み込んだデータ:", data);
 
-            // 例: CSVの中に 'time' と 'value' という列があると仮定しています
-            // ※御主人様のCSVに合わせてここを書き換えます
-            
-            // 1. データを配列に変換
-            // (CSVの列名に合わせて変更してください)
-            const labels = data.map(row => row.time || row.Time || row.Date || "No Label"); 
-            const values = data.map(row => row.value || row.Value || row.Data || 0);
+            // データが空でないかチェック
+            if (data.length === 0) {
+                alert("データ読み込みに失敗しました。CSVの中身を確認してください。");
+                return;
+            }
 
-            // 2. 計算ロジック (平均や最大値など)
-            const sum = values.reduce((a, b) => a + b, 0);
-            const avg = (sum / values.length).toFixed(2);
-            const max = Math.max(...values);
+            // 1. 必要なデータを抽出
+            // CSVの列名: time, distance, azimuth, elevation, ...
+            const labels = data.map(row => row.time);     // 横軸: 時間
+            const distances = data.map(row => row.distance); // 縦軸: 距離
+            
+            // データから「undefined」を除外（空行対策）
+            const cleanDistances = distances.filter(d => typeof d === 'number');
+
+            // 2. 計算ロジック (距離の統計)
+            const count = cleanDistances.length;
+            const sum = cleanDistances.reduce((a, b) => a + b, 0);
+            const avg = count > 0 ? (sum / count).toFixed(2) : 0;
+            const max = count > 0 ? Math.max(...cleanDistances) : 0;
 
             // 3. 画面上の数値を更新
-            document.getElementById('rowCount').innerText = data.length + " 行";
-            document.getElementById('avgValue').innerText = avg;
-            document.getElementById('maxValue').innerText = max;
+            // HTML側のIDに合わせて値をセットします
+            const rowCountEl = document.getElementById('rowCount');
+            if(rowCountEl) rowCountEl.innerText = count + " 行";
+            
+            const avgValEl = document.getElementById('avgValue');
+            if(avgValEl) avgValEl.innerText = avg + " cm"; // 単位は推測(cm)
+
+            const maxValEl = document.getElementById('maxValue');
+            if(maxValEl) maxValEl.innerText = max + " cm";
 
             // 4. グラフを描画
-            drawChart(labels, values);
+            drawChart(labels, distances);
 
             // 結果エリアを表示
-            document.getElementById('results').classList.remove('hidden');
+            const resultDiv = document.getElementById('results');
+            if(resultDiv) resultDiv.classList.remove('hidden');
         }
         // ▲▲▲ 解析ロジックここまで ▲▲▲
 
@@ -126,23 +144,41 @@
 
             // 新しいグラフを描く
             myChart = new Chart(ctx, {
-                type: 'line', // 'bar' にすれば棒グラフになります
+                type: 'line', 
                 data: {
-                    labels: labels,
+                    labels: labels, // X軸: time
                     datasets: [{
-                        label: '解析データ',
-                        data: dataPoints,
-                        borderColor: 'rgb(59, 130, 246)',
+                        label: 'Distance (距離)',
+                        data: dataPoints, // Y軸: distance
+                        borderColor: 'rgb(59, 130, 246)', // 青色
                         backgroundColor: 'rgba(59, 130, 246, 0.1)',
-                        tension: 0.1,
+                        borderWidth: 2,
+                        pointRadius: 2, // 点の大きさ
+                        tension: 0.1,   // 線の滑らかさ
                         fill: true
                     }]
                 },
                 options: {
                     responsive: true,
+                    interaction: {
+                        mode: 'index',
+                        intersect: false,
+                    },
                     plugins: {
                         legend: { position: 'top' },
-                        title: { display: true, text: 'CSV Data Visualization' }
+                        title: { display: true, text: 'Time vs Distance' }
+                    },
+                    scales: {
+                        x: {
+                            title: { display: true, text: 'Time' },
+                            ticks: {
+                                maxTicksLimit: 20 // 目盛りが多すぎないように間引く
+                            }
+                        },
+                        y: {
+                            title: { display: true, text: 'Distance' },
+                            beginAtZero: false // 0から始めない（変化を見やすくする）
+                        }
                     }
                 }
             });
