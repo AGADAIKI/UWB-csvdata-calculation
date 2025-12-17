@@ -120,27 +120,53 @@
                             </div>
                         </div>
 
-                        <!-- フィルターコントロール -->
-                        <div class="flex items-center gap-4 mb-4">
-                            <span class="text-sm font-medium text-slate-600">表示データ:</span>
-                            <div class="flex bg-slate-100 p-1 rounded-lg">
-                                <label class="cursor-pointer">
-                                    <input type="radio" name="filterMode" value="all" class="peer sr-only" checked onchange="updateLineChart()">
-                                    <span class="block px-3 py-1 text-sm rounded-md transition-all text-slate-500 peer-checked:bg-white peer-checked:text-blue-600 peer-checked:shadow-sm peer-checked:font-bold">全て</span>
-                                </label>
-                                <label class="cursor-pointer">
-                                    <input type="radio" name="filterMode" value="los" class="peer sr-only" onchange="updateLineChart()">
-                                    <span class="block px-3 py-1 text-sm rounded-md transition-all text-slate-500 peer-checked:bg-white peer-checked:text-blue-600 peer-checked:shadow-sm peer-checked:font-bold">LOSのみ</span>
-                                </label>
-                                <label class="cursor-pointer">
-                                    <input type="radio" name="filterMode" value="nlos" class="peer sr-only" onchange="updateLineChart()">
-                                    <span class="block px-3 py-1 text-sm rounded-md transition-all text-slate-500 peer-checked:bg-white peer-checked:text-blue-600 peer-checked:shadow-sm peer-checked:font-bold">NLOSのみ</span>
-                                </label>
-                            </div>
-                        </div>
+                        <!-- ヒストグラム & グラフエリア -->
+                        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
 
-                        <div class="relative h-96 w-full">
-                            <canvas id="myChart"></canvas>
+                            <!-- フィルター & ヒストグラム (左側 1/3) -->
+                            <div class="lg:col-span-1 flex flex-col gap-4">
+                                <div class="bg-slate-50 rounded-lg p-4">
+                                    <h4 class="text-sm font-bold text-slate-600 mb-3">データフィルター</h4>
+                                    <div class="flex flex-col gap-2">
+                                        <label class="cursor-pointer">
+                                            <input type="radio" name="filterMode" value="all" class="peer sr-only" checked onchange="updateCharts()">
+                                            <div class="px-3 py-2 text-sm rounded-md transition-all bg-white border border-slate-200 text-slate-500 peer-checked:border-blue-500 peer-checked:text-blue-600 peer-checked:bg-blue-50 peer-checked:font-bold flex items-center justify-between">
+                                                <span>All (全データ)</span>
+                                                <span class="text-xs text-slate-400">●</span>
+                                            </div>
+                                        </label>
+                                        <label class="cursor-pointer">
+                                            <input type="radio" name="filterMode" value="los" class="peer sr-only" onchange="updateCharts()">
+                                            <div class="px-3 py-2 text-sm rounded-md transition-all bg-white border border-slate-200 text-slate-500 peer-checked:border-blue-500 peer-checked:text-blue-600 peer-checked:bg-blue-50 peer-checked:font-bold flex items-center justify-between">
+                                                <span>LOS only (見通し内)</span>
+                                                <span class="text-xs text-blue-500">●</span>
+                                            </div>
+                                        </label>
+                                        <label class="cursor-pointer">
+                                            <input type="radio" name="filterMode" value="nlos" class="peer sr-only" onchange="updateCharts()">
+                                            <div class="px-3 py-2 text-sm rounded-md transition-all bg-white border border-slate-200 text-slate-500 peer-checked:border-blue-500 peer-checked:text-blue-600 peer-checked:bg-blue-50 peer-checked:font-bold flex items-center justify-between">
+                                                <span>NLOS only (見通し外)</span>
+                                                <span class="text-xs text-red-500">●</span>
+                                            </div>
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <div class="bg-slate-50 rounded-lg p-4 flex-1">
+                                    <h4 class="text-sm font-bold text-slate-600 mb-2">距離分布 (ヒストグラム)</h4>
+                                    <div class="relative h-64 w-full">
+                                        <canvas id="histogramChart"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 時系列グラフ (右側 2/3) -->
+                            <div class="lg:col-span-2 bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
+                                <h4 class="text-sm font-bold text-slate-600 mb-2">時系列データ推移</h4>
+                                <div class="relative h-96 w-full">
+                                    <canvas id="myChart"></canvas>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -174,6 +200,7 @@
     <script>
         let myChart = null;
         let nlosChart = null;
+        let histogramChart = null;
         let rawCsvData = [];
 
         function processCSV() {
@@ -224,8 +251,8 @@
             const nlosCount = data.filter(row => row.nlos === 1).length;
             drawPieChart(losCount, nlosCount);
 
-            // Draw Line Chart (initial state based on checked radio)
-            updateLineChart();
+            // Draw Charts (initial state based on checked radio)
+            updateCharts();
 
             document.getElementById('results').classList.remove('hidden');
         }
@@ -240,7 +267,7 @@
             nlosChart = new Chart(ctx, {
                 type: 'pie',
                 data: {
-                    labels: ['LOS (Line of Sight)', 'NLOS (Non-Line of Sight)'],
+                    labels: ['LOS (見通し内)', 'NLOS (見通し外)'],
                     datasets: [{
                         data: [losCount, nlosCount],
                         backgroundColor: [
@@ -270,7 +297,7 @@
             });
         }
 
-        function updateLineChart() {
+        function updateCharts() {
             const filterMode = document.querySelector('input[name="filterMode"]:checked').value;
 
             let filteredData = rawCsvData;
@@ -283,7 +310,10 @@
             const labels = filteredData.map(row => row.time);
             const distances = filteredData.map(row => row.distance);
 
+            // Draw Line Chart
             drawChart(labels, distances);
+            // Draw Histogram
+            drawHistogram(distances);
         }
 
         function drawChart(labels, dataPoints) {
@@ -322,6 +352,84 @@
                     scales: {
                         x: {
                             ticks: { maxTicksLimit: 12 }
+                        }
+                    }
+                }
+            });
+        }
+
+        function drawHistogram(dataPoints) {
+            const ctx = document.getElementById('histogramChart').getContext('2d');
+
+            if (histogramChart) {
+                histogramChart.destroy();
+            }
+
+            if (dataPoints.length === 0) return;
+
+            // Calculate bins
+            const cleanData = dataPoints.filter(d => typeof d === 'number');
+            if (cleanData.length === 0) return;
+
+            const min = Math.min(...cleanData);
+            const max = Math.max(...cleanData);
+            const binCount = 20;
+            const binWidth = (max - min) / binCount;
+
+            const bins = new Array(binCount).fill(0);
+            const binLabels = [];
+
+            // Initialize labels
+            for (let i = 0; i < binCount; i++) {
+                const start = min + i * binWidth;
+                const end = min + (i + 1) * binWidth;
+                binLabels.push(`${Math.round(start)}-${Math.round(end)}`);
+            }
+
+            // Fill bins
+            cleanData.forEach(val => {
+                // handle max value falling into the last bin
+                let index = Math.floor((val - min) / binWidth);
+                if (index >= binCount) index = binCount - 1;
+                bins[index]++;
+            });
+
+            histogramChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: binLabels,
+                    datasets: [{
+                        label: 'Frequency',
+                        data: bins,
+                        backgroundColor: 'rgba(59, 130, 246, 0.6)',
+                        borderColor: 'rgba(59, 130, 246, 1)',
+                        borderWidth: 1,
+                        barPercentage: 1.0,
+                        categoryPercentage: 1.0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                title: (items) => `Range: ${items[0].label}`,
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            ticks: {
+                                maxTicksLimit: 5,
+                                font: { size: 10 }
+                            },
+                            grid: { display: false }
+                        },
+                        y: {
+                            beginAtZero: true,
+                            ticks: { font: { size: 10 } }
                         }
                     }
                 }
