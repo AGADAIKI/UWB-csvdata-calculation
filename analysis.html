@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CSV Analysis - Lab Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="bg-slate-50 text-slate-700 antialiased">
+
+    <!-- ヘッダー -->
+    <header class="bg-white shadow-sm sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16 items-center">
+                <div class="flex items-center">
+                    <div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-white font-bold mr-3">
+                        A
+                    </div>
+                    <h1 class="text-xl font-bold text-slate-800 tracking-tight">CSV Analyzer</h1>
+                </div>
+                <!-- ホームへ戻るリンク -->
+                <a href="index.html" class="text-sm text-slate-500 hover:text-blue-600 flex items-center">
+                    &larr; Back to Home
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex flex-col lg:flex-row gap-8">
+
+        <!-- サイドバー -->
+        <aside class="w-full lg:w-64 flex-shrink-0">
+            <div class="sticky top-24">
+                <nav class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                    <div class="px-4 py-3 border-b border-slate-100 bg-slate-50">
+                        <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider">Menu</h3>
+                    </div>
+                    <ul class="flex flex-col">
+                        <li>
+                            <a href="index.html" class="block px-4 py-3 text-sm font-medium text-slate-600 hover:bg-slate-50 hover:text-blue-600 border-l-4 border-transparent hover:border-blue-600 transition-colors">
+                                Home
+                            </a>
+                        </li>
+                        <li>
+                            <a href="analysis.html" class="block px-4 py-3 text-sm font-medium text-blue-600 bg-blue-50 border-l-4 border-blue-600">
+                                CSV解析ツール
+                            </a>
+                        </li>
+                    </ul>
+                </nav>
+
+                <!-- ページ内リンク -->
+                <div class="mt-6">
+                    <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 px-2">On this page</h4>
+                    <ul class="space-y-1">
+                        <li><a href="#tool" class="block px-2 py-1 text-sm text-slate-600 hover:text-blue-600">・解析実行</a></li>
+                        <li><a href="#guide" class="block px-2 py-1 text-sm text-slate-600 hover:text-blue-600">・ガイド</a></li>
+                        <li><a href="#specs" class="block px-2 py-1 text-sm text-slate-600 hover:text-blue-600">・技術仕様</a></li>
+                    </ul>
+                </div>
+            </div>
+        </aside>
+
+        <!-- メインコンテンツ -->
+        <main class="flex-1 min-w-0">
+
+            <!-- 解析エリア -->
+            <section id="tool" class="mb-12 scroll-mt-24">
+                <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+                    <h2 class="text-lg font-bold text-slate-800 mb-4">ファイル解析</h2>
+                    
+                    <div class="flex flex-col sm:flex-row gap-4 items-center mb-6">
+                        <input type="file" id="csvFile" accept=".csv" 
+                               class="block w-full text-sm text-slate-500
+                                      file:mr-4 file:py-2 file:px-4
+                                      file:rounded-full file:border-0
+                                      file:text-sm file:font-semibold
+                                      file:bg-slate-100 file:text-slate-700
+                                      hover:file:bg-slate-200 cursor-pointer"/>
+                        <button onclick="processCSV()" 
+                                class="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-6 rounded-lg transition shadow-sm whitespace-nowrap">
+                            実行
+                        </button>
+                    </div>
+
+                    <!-- 結果表示 -->
+                    <div id="results" class="hidden border-t border-slate-100 pt-6 mt-6">
+                        <div class="grid grid-cols-3 gap-4 mb-6 text-center">
+                            <div class="p-3 bg-slate-50 rounded-lg">
+                                <div class="text-xs text-slate-400 mb-1">データ数</div>
+                                <div class="text-lg font-bold text-slate-800" id="rowCount">-</div>
+                            </div>
+                            <div class="p-3 bg-slate-50 rounded-lg">
+                                <div class="text-xs text-slate-400 mb-1">平均距離</div>
+                                <div class="text-lg font-bold text-blue-600" id="avgValue">-</div>
+                            </div>
+                            <div class="p-3 bg-slate-50 rounded-lg">
+                                <div class="text-xs text-slate-400 mb-1">最大距離</div>
+                                <div class="text-lg font-bold text-green-600" id="maxValue">-</div>
+                            </div>
+                        </div>
+                        <div class="relative h-96 w-full">
+                            <canvas id="myChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ガイド -->
+            <section id="guide" class="mb-12 scroll-mt-24">
+                <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-8">
+                    <h3 class="text-lg font-bold text-slate-800 mb-4">利用ガイド</h3>
+                    <ul class="list-disc pl-5 space-y-2 text-slate-600 text-sm">
+                        <li><strong>ファイル形式:</strong> カンマ区切り(.csv)のファイルのみ対応しています。</li>
+                        <li><strong>必須カラム:</strong> <code>time</code> (時間) および <code>distance</code> (距離) の列が必要です。</li>
+                        <li><strong>自動補正:</strong> ヘッダー行に含まれる余分な空白は自動的に除去されます。</li>
+                    </ul>
+                </div>
+            </section>
+
+            <!-- 技術仕様 -->
+            <section id="specs" class="mb-12 scroll-mt-24">
+                <div class="bg-slate-100 rounded-xl p-6 text-xs text-slate-500 font-mono">
+                    <p class="font-bold mb-2">Technical Specs:</p>
+                    <p>Parser: PapaParse v5.4.1 (Worker mode: disabled)</p>
+                    <p>Visualization: Chart.js v4.x (Responsive)</p>
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <!-- 解析ロジック -->
+    <script>
+        let myChart = null;
+
+        function processCSV() {
+            const fileInput = document.getElementById('csvFile');
+            const file = fileInput.files[0];
+
+            if (!file) {
+                alert("ファイルを選択してください");
+                return;
+            }
+
+            Papa.parse(file, {
+                header: true,        
+                dynamicTyping: true, 
+                skipEmptyLines: true,
+                transformHeader: function(header) {
+                    return header.trim();
+                },
+                complete: function(results) {
+                    analyzeData(results.data);
+                }
+            });
+        }
+
+        function analyzeData(data) {
+            if (data.length === 0) {
+                alert("データ読み込みに失敗しました。");
+                return;
+            }
+
+            const labels = data.map(row => row.time);
+            const distances = data.map(row => row.distance);
+            const cleanDistances = distances.filter(d => typeof d === 'number');
+
+            const count = cleanDistances.length;
+            const sum = cleanDistances.reduce((a, b) => a + b, 0);
+            const avg = count > 0 ? (sum / count).toFixed(2) : 0;
+            const max = count > 0 ? Math.max(...cleanDistances) : 0;
+
+            document.getElementById('rowCount').innerText = count + " 行";
+            document.getElementById('avgValue').innerText = avg + " cm";
+            document.getElementById('maxValue').innerText = max + " cm";
+
+            drawChart(labels, distances);
+            document.getElementById('results').classList.remove('hidden');
+        }
+
+        function drawChart(labels, dataPoints) {
+            const ctx = document.getElementById('myChart').getContext('2d');
+            
+            if (myChart) {
+                myChart.destroy();
+            }
+
+            myChart = new Chart(ctx, {
+                type: 'line', 
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Distance',
+                        data: dataPoints,
+                        borderColor: 'rgb(37, 99, 235)',
+                        backgroundColor: 'rgba(37, 99, 235, 0.05)',
+                        borderWidth: 2,
+                        pointRadius: 0, 
+                        pointHoverRadius: 4,
+                        tension: 0.1,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: {
+                        mode: 'index',
+                        intersect: false,
+                    },
+                    plugins: {
+                        legend: { position: 'top' },
+                    },
+                    scales: {
+                        x: {
+                            ticks: { maxTicksLimit: 12 }
+                        }
+                    }
+                }
+            });
+        }
+    </script>
+</body>
+</html>
