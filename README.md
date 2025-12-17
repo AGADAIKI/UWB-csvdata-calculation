@@ -18,11 +18,11 @@ Tailwind CSSによるモダンなUIと、JavaScriptによるクライアント�
 ユーザーがアップロードするCSVファイル (log_*.csv) の仕様です。
 Julesがロジックを改修する際は以下を考慮してください。
 
-特記事項:
+* **特記事項**:
 
-ヘッダー行の列名には、前後に空白が含まれる場合があります（例: " distance"）。
+* ヘッダー行の列名には、前後に空白が含まれる場合があります（例: " distance"）。
 
-JS側の PapaParse 設定で transformHeader: header => header.trim() を適用済みです。
+* JS側の PapaParse 設定で transformHeader: header => header.trim() を適用済みです。
 
 ## Julesへの開発ロードマップ (指示用)
 このプロジェクトを引き継ぐJulesエージェントは、以下のタスクを実施する予定です。
