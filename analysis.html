@@ -156,7 +156,13 @@
 
                         <!-- ヒストグラム -->
                         <div class="bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
-                            <h4 class="text-sm font-bold text-slate-600 mb-2">距離分布 (ヒストグラム)</h4>
+                            <div class="flex justify-between items-center mb-2">
+                                <h4 class="text-sm font-bold text-slate-600">距離分布 (ヒストグラム)</h4>
+                                <div class="flex items-center gap-2">
+                                    <label for="binWidth" class="text-xs text-slate-500 font-medium">Bin Width (cm):</label>
+                                    <input type="number" id="binWidth" step="0.5" min="0.5" class="w-20 text-sm border border-slate-300 rounded px-2 py-1" onchange="updateCharts()">
+                                </div>
+                            </div>
                             <div class="relative h-64 w-full">
                                 <canvas id="histogramChart"></canvas>
                             </div>
@@ -371,24 +377,32 @@
 
             const min = Math.min(...cleanData);
             const max = Math.max(...cleanData);
-            const binCount = 20;
-            const binWidth = (max - min) / binCount;
 
-            const bins = new Array(binCount).fill(0);
+            let binWidth = parseFloat(document.getElementById('binWidth').value);
+            if (!binWidth || binWidth <= 0) binWidth = 5;
+
+            const binCount = Math.ceil((max - min) / binWidth);
+            // Limit excessive bins to prevent browser hang
+            if (binCount > 1000) {
+                 console.warn("Too many bins, capping at 1000");
+            }
+            const safeBinCount = Math.min(binCount, 1000);
+
+            const bins = new Array(safeBinCount).fill(0);
             const binLabels = [];
 
             // Initialize labels
-            for (let i = 0; i < binCount; i++) {
+            for (let i = 0; i < safeBinCount; i++) {
                 const start = min + i * binWidth;
                 const end = min + (i + 1) * binWidth;
-                binLabels.push(`${Math.round(start)}-${Math.round(end)}`);
+                binLabels.push(`${Math.round(start*10)/10}-${Math.round(end*10)/10}`);
             }
 
             // Fill bins
             cleanData.forEach(val => {
-                // handle max value falling into the last bin
                 let index = Math.floor((val - min) / binWidth);
-                if (index >= binCount) index = binCount - 1;
+                if (index >= safeBinCount) index = safeBinCount - 1;
+                if (index < 0) index = 0;
                 bins[index]++;
             });
 
