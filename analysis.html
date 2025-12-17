@@ -94,31 +94,6 @@
 
                     <!-- 結果表示 -->
                     <div id="results" class="hidden border-t border-slate-100 pt-6 mt-6">
-                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-                            <!-- 統計情報 -->
-                            <div class="grid grid-cols-3 gap-4 text-center h-min">
-                                <div class="p-3 bg-slate-50 rounded-lg">
-                                    <div class="text-xs text-slate-400 mb-1">データ数</div>
-                                    <div class="text-lg font-bold text-slate-800" id="rowCount">-</div>
-                                </div>
-                                <div class="p-3 bg-slate-50 rounded-lg">
-                                    <div class="text-xs text-slate-400 mb-1">平均距離</div>
-                                    <div class="text-lg font-bold text-blue-600" id="avgValue">-</div>
-                                </div>
-                                <div class="p-3 bg-slate-50 rounded-lg">
-                                    <div class="text-xs text-slate-400 mb-1">最大距離</div>
-                                    <div class="text-lg font-bold text-green-600" id="maxValue">-</div>
-                                </div>
-                            </div>
-
-                            <!-- NLOS円グラフ -->
-                            <div class="bg-slate-50 rounded-lg p-4 flex flex-col items-center justify-center">
-                                <h4 class="text-sm font-bold text-slate-600 mb-2">通信環境 (LOS / NLOS)</h4>
-                                <div class="relative h-48 w-full max-w-xs">
-                                    <canvas id="nlosChart"></canvas>
-                                </div>
-                            </div>
-                        </div>
 
                         <!-- フィルターコントロール -->
                         <div class="flex items-center gap-4 mb-6">
@@ -142,6 +117,32 @@
                                         NLOS only
                                     </span>
                                 </label>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                            <!-- 統計情報 -->
+                            <div class="grid grid-cols-3 gap-4 text-center h-min">
+                                <div class="p-3 bg-slate-50 rounded-lg">
+                                    <div class="text-xs text-slate-400 mb-1">データ数</div>
+                                    <div class="text-lg font-bold text-slate-800" id="rowCount">-</div>
+                                </div>
+                                <div class="p-3 bg-slate-50 rounded-lg">
+                                    <div class="text-xs text-slate-400 mb-1">平均距離</div>
+                                    <div class="text-lg font-bold text-blue-600" id="avgValue">-</div>
+                                </div>
+                                <div class="p-3 bg-slate-50 rounded-lg">
+                                    <div class="text-xs text-slate-400 mb-1">最大距離</div>
+                                    <div class="text-lg font-bold text-green-600" id="maxValue">-</div>
+                                </div>
+                            </div>
+
+                            <!-- NLOS円グラフ -->
+                            <div class="bg-slate-50 rounded-lg p-4 flex flex-col items-center justify-center">
+                                <h4 class="text-sm font-bold text-slate-600 mb-2">通信環境 (LOS / NLOS)</h4>
+                                <div class="relative h-48 w-full max-w-xs">
+                                    <canvas id="nlosChart"></canvas>
+                                </div>
                             </div>
                         </div>
 
@@ -226,6 +227,18 @@
             // Store raw data for filtering
             rawCsvData = data;
 
+            // Draw Pie Chart for NLOS
+            const losCount = data.filter(row => row.nlos === 0).length;
+            const nlosCount = data.filter(row => row.nlos === 1).length;
+            drawPieChart(losCount, nlosCount);
+
+            // Draw Charts and update stats (initial state based on checked radio)
+            updateCharts();
+
+            document.getElementById('results').classList.remove('hidden');
+        }
+
+        function updateStats(data) {
             const distances = data.map(row => row.distance);
             const cleanDistances = distances.filter(d => typeof d === 'number');
 
@@ -237,16 +250,6 @@
             document.getElementById('rowCount').innerText = count + " 行";
             document.getElementById('avgValue').innerText = avg + " cm";
             document.getElementById('maxValue').innerText = max + " cm";
-
-            // Draw Pie Chart for NLOS
-            const losCount = data.filter(row => row.nlos === 0).length;
-            const nlosCount = data.filter(row => row.nlos === 1).length;
-            drawPieChart(losCount, nlosCount);
-
-            // Draw Charts (initial state based on checked radio)
-            updateCharts();
-
-            document.getElementById('results').classList.remove('hidden');
         }
 
         function drawPieChart(losCount, nlosCount) {
@@ -298,6 +301,9 @@
             } else if (filterMode === 'nlos') {
                 filteredData = rawCsvData.filter(row => row.nlos === 1);
             }
+
+            // Update stats based on filtered data
+            updateStats(filteredData);
 
             const labels = filteredData.map(row => row.time);
             const distances = filteredData.map(row => row.distance);
