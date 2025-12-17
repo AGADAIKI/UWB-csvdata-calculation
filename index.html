@@ -3,53 +3,150 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>UWB Analytics|UWBデータ解析ツール</title>
+    <title>Browser CSV Analyzer</title>
+    
     <script src="https://cdn.tailwindcss.com"></script>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+    
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body class="bg-slate-50 text-slate-700 antialiased">
 
     <header class="bg-white shadow-sm sticky top-0 z-50">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between h-16 items-center">
-                <h1 class="text-xl font-bold text-slate-800">My Lab Dashboard</h1>
-                <div class="flex space-x-4">
-                    <span class="px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
-                        System: Online
-                    </span>
-                </div>
-            </div>
+        <div class="max-w-7xl mx-auto px-4 py-4">
+            <h1 class="text-xl font-bold text-slate-800">CSV Analysis (Client Side)</h1>
         </div>
     </header>
 
-    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <main class="max-w-5xl mx-auto px-4 py-10">
         
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            
-            <div class="bg-white rounded-xl shadow-sm p-6 border border-slate-100">
-                <h2 class="text-lg font-semibold mb-2">Sensor A</h2>
-                <div class="text-3xl font-bold text-blue-600" id="sensor-value">--</div>
-                <p class="text-sm text-slate-500 mt-1">Last update: <span id="update-time">--:--</span></p>
+        <div class="bg-white rounded-xl shadow p-6 mb-8 border border-slate-200">
+            <h2 class="text-lg font-bold mb-4">データ解析設定</h2>
+            <div class="flex flex-col md:flex-row gap-4 items-center">
+                <input type="file" id="csvFile" accept=".csv" 
+                       class="block w-full text-sm text-slate-500
+                              file:mr-4 file:py-2 file:px-4
+                              file:rounded-full file:border-0
+                              file:text-sm file:font-semibold
+                              file:bg-blue-50 file:text-blue-700
+                              hover:file:bg-blue-100 cursor-pointer"/>
+                
+                <button onclick="processCSV()" 
+                        class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-lg transition">
+                    解析実行
+                </button>
             </div>
-
-            <div class="bg-white rounded-xl shadow-sm p-6 border border-slate-100 md:col-span-2">
-                <h2 class="text-lg font-semibold mb-4">Measurement Data</h2>
-                <canvas id="myChart" class="w-full h-64"></canvas>
-            </div>
-
         </div>
+
+        <div id="results" class="hidden">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                <div class="bg-white p-6 rounded-xl shadow border border-slate-100">
+                    <div class="text-sm text-slate-400">データ行数</div>
+                    <div class="text-2xl font-bold text-slate-800" id="rowCount">-</div>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow border border-slate-100">
+                    <div class="text-sm text-slate-400">平均値 (例)</div>
+                    <div class="text-2xl font-bold text-blue-600" id="avgValue">-</div>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow border border-slate-100">
+                    <div class="text-sm text-slate-400">最大値 (例)</div>
+                    <div class="text-2xl font-bold text-green-600" id="maxValue">-</div>
+                </div>
+            </div>
+
+            <div class="bg-white p-6 rounded-xl shadow border border-slate-200">
+                <canvas id="myChart"></canvas>
+            </div>
+        </div>
+
     </main>
 
-    <footer class="bg-white border-t border-slate-200 mt-12 py-8">
-        <div class="text-center text-sm text-slate-400">
-            &copy; 2025 My Laboratory
-        </div>
-    </footer>
-
     <script>
-        // ダミーデータでの動作確認用
-        document.getElementById('sensor-value').innerText = "24.5°C";
-        document.getElementById('update-time').innerText = new Date().toLocaleTimeString();
+        let myChart = null; // グラフの入れ物
+
+        function processCSV() {
+            const fileInput = document.getElementById('csvFile');
+            const file = fileInput.files[0];
+
+            if (!file) {
+                alert("ファイルを選択してください");
+                return;
+            }
+
+            // CSVを読み込む処理 (PapaParse使用)
+            Papa.parse(file, {
+                header: true,      // 1行目を項目名として扱う
+                dynamicTyping: true, // 数字を自動で数値として扱う
+                skipEmptyLines: true,
+                complete: function(results) {
+                    // 読み込み完了！ results.data に中身が入っています
+                    analyzeData(results.data);
+                }
+            });
+        }
+
+        // ▼▼▼ 御主人様が変更するべき「解析ロジック」はここです ▼▼▼
+        function analyzeData(data) {
+            console.log("読み込んだデータ:", data);
+
+            // 例: CSVの中に 'time' と 'value' という列があると仮定しています
+            // ※御主人様のCSVに合わせてここを書き換えます
+            
+            // 1. データを配列に変換
+            // (CSVの列名に合わせて変更してください)
+            const labels = data.map(row => row.time || row.Time || row.Date || "No Label"); 
+            const values = data.map(row => row.value || row.Value || row.Data || 0);
+
+            // 2. 計算ロジック (平均や最大値など)
+            const sum = values.reduce((a, b) => a + b, 0);
+            const avg = (sum / values.length).toFixed(2);
+            const max = Math.max(...values);
+
+            // 3. 画面上の数値を更新
+            document.getElementById('rowCount').innerText = data.length + " 行";
+            document.getElementById('avgValue').innerText = avg;
+            document.getElementById('maxValue').innerText = max;
+
+            // 4. グラフを描画
+            drawChart(labels, values);
+
+            // 結果エリアを表示
+            document.getElementById('results').classList.remove('hidden');
+        }
+        // ▲▲▲ 解析ロジックここまで ▲▲▲
+
+        function drawChart(labels, dataPoints) {
+            const ctx = document.getElementById('myChart').getContext('2d');
+            
+            // 前のグラフがあれば消す
+            if (myChart) {
+                myChart.destroy();
+            }
+
+            // 新しいグラフを描く
+            myChart = new Chart(ctx, {
+                type: 'line', // 'bar' にすれば棒グラフになります
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: '解析データ',
+                        data: dataPoints,
+                        borderColor: 'rgb(59, 130, 246)',
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        tension: 0.1,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { position: 'top' },
+                        title: { display: true, text: 'CSV Data Visualization' }
+                    }
+                }
+            });
+        }
     </script>
 </body>
 </html>
