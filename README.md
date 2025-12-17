@@ -1,9 +1,8 @@
-# Lab Dashboard & CSV Analyzer
+# UWB analysis | UWBデータ解析ツール
 ##
 [text](https://agadaiki.github.io/UWB-csvdata-calculation/)
-## プロジェクト概要
-GitHub Pagesで動作する、サーバーレスの実験データ解析ダッシュボードです。
-Tailwind CSSによるモダンなUIと、JavaScriptによるクライアントサイドでのCSV解析・グラフ化機能を備えています。
+## 概要
+UWB analysisは, 「MURATA UWB Type 2BP」 
 ##  ファイル構成
 * index.html: ポータル画面。各ツールへのリンクと更新履歴を表示。
 * analysis.html: CSV解析ツール本体。PapaParseとChart.jsを使用。
