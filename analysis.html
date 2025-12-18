@@ -405,12 +405,11 @@
                 myChart.destroy();
             }
 
+            // Only use Average Distance as the reference line for Time Series
             const trueAvg = parseFloat(document.getElementById('trueAvgDist').value);
-            const trueMax = parseFloat(document.getElementById('trueMaxDist').value);
 
             const lines = [];
             if (!isNaN(trueAvg)) lines.push({ value: trueAvg, color: 'red' });
-            if (!isNaN(trueMax)) lines.push({ value: trueMax, color: 'red' });
 
             myChart = new Chart(ctx, {
                 type: 'line', 
