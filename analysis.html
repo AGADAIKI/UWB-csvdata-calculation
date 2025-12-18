@@ -125,15 +125,18 @@
                             <div class="grid grid-cols-3 gap-4 text-center h-min">
                                 <div class="p-3 bg-slate-50 rounded-lg">
                                     <div class="text-xs text-slate-400 mb-1">データ数</div>
-                                    <div class="text-lg font-bold text-slate-800" id="rowCount">-</div>
+                                    <div class="text-lg font-bold text-slate-800 mb-2" id="rowCount">-</div>
+                                    <input type="number" id="trueDataCount" placeholder="真値" class="w-full text-xs border border-slate-300 rounded px-1 py-1 text-center" onchange="updateCharts()">
                                 </div>
                                 <div class="p-3 bg-slate-50 rounded-lg">
                                     <div class="text-xs text-slate-400 mb-1">平均距離</div>
-                                    <div class="text-lg font-bold text-blue-600" id="avgValue">-</div>
+                                    <div class="text-lg font-bold text-blue-600 mb-2" id="avgValue">-</div>
+                                    <input type="number" id="trueAvgDist" placeholder="真値" class="w-full text-xs border border-slate-300 rounded px-1 py-1 text-center" onchange="updateCharts()">
                                 </div>
                                 <div class="p-3 bg-slate-50 rounded-lg">
                                     <div class="text-xs text-slate-400 mb-1">最大距離</div>
-                                    <div class="text-lg font-bold text-green-600" id="maxValue">-</div>
+                                    <div class="text-lg font-bold text-green-600 mb-2" id="maxValue">-</div>
+                                    <input type="number" id="trueMaxDist" placeholder="真値" class="w-full text-xs border border-slate-300 rounded px-1 py-1 text-center" onchange="updateCharts()">
                                 </div>
                             </div>
 
@@ -298,6 +301,81 @@
             });
         }
 
+        // Plugin to draw horizontal reference lines
+        const horizontalLinePlugin = {
+            id: 'horizontalLinePlugin',
+            afterDatasetsDraw(chart, args, options) {
+                const { ctx, chartArea: { left, right, top, bottom }, scales: { x, y } } = chart;
+
+                if (!options.lines || options.lines.length === 0) return;
+
+                ctx.save();
+                options.lines.forEach(line => {
+                    const yVal = line.value;
+                    if (yVal === null || yVal === undefined || isNaN(yVal)) return;
+
+                    const yPixel = y.getPixelForValue(yVal);
+                    if (yPixel < top || yPixel > bottom) return; // Skip if out of view
+
+                    ctx.beginPath();
+                    ctx.strokeStyle = line.color || 'red';
+                    ctx.lineWidth = line.width || 2;
+                    ctx.moveTo(left, yPixel);
+                    ctx.lineTo(right, yPixel);
+                    ctx.stroke();
+                });
+                ctx.restore();
+            }
+        };
+
+        // Plugin to draw vertical reference lines (on category axis, approximated)
+        const verticalLinePlugin = {
+            id: 'verticalLinePlugin',
+            afterDatasetsDraw(chart, args, options) {
+                const { ctx, chartArea: { left, right, top, bottom }, scales: { x, y } } = chart;
+
+                if (!options.lines || options.lines.length === 0) return;
+
+                // We need min/max/binWidth to calculate position if axis is category
+                const min = options.min;
+                const binWidth = options.binWidth;
+                const totalWidth = right - left;
+                // Calculate total range covered by bins (safeBinCount * binWidth)
+                const range = options.range;
+
+                ctx.save();
+                options.lines.forEach(line => {
+                    const val = line.value;
+                    if (val === null || val === undefined || isNaN(val)) return;
+
+                    let xPixel;
+
+                    if (range && binWidth) {
+                         // Linear interpolation based on known range of the histogram
+                         const offset = val - min;
+                         const ratio = offset / range;
+                         // Adjust for padding or bar centering?
+                         // Chart.js Category axis draws bars from left to right covering the area.
+                         // Using ratio * totalWidth is a reasonable approximation for visual reference
+                         xPixel = left + (ratio * totalWidth);
+                    } else {
+                        // Fallback or other logic if we had a linear axis
+                        xPixel = x.getPixelForValue(val);
+                    }
+
+                    if (xPixel < left || xPixel > right) return;
+
+                    ctx.beginPath();
+                    ctx.strokeStyle = line.color || 'red';
+                    ctx.lineWidth = line.width || 2;
+                    ctx.moveTo(xPixel, top);
+                    ctx.lineTo(xPixel, bottom);
+                    ctx.stroke();
+                });
+                ctx.restore();
+            }
+        };
+
         function updateCharts() {
             const filterMode = document.querySelector('input[name="filterMode"]:checked').value;
 
@@ -327,6 +405,13 @@
                 myChart.destroy();
             }
 
+            const trueAvg = parseFloat(document.getElementById('trueAvgDist').value);
+            const trueMax = parseFloat(document.getElementById('trueMaxDist').value);
+
+            const lines = [];
+            if (!isNaN(trueAvg)) lines.push({ value: trueAvg, color: 'red' });
+            if (!isNaN(trueMax)) lines.push({ value: trueMax, color: 'red' });
+
             myChart = new Chart(ctx, {
                 type: 'line', 
                 data: {
@@ -352,13 +437,17 @@
                     },
                     plugins: {
                         legend: { position: 'top' },
+                        horizontalLinePlugin: {
+                            lines: lines
+                        }
                     },
                     scales: {
                         x: {
                             ticks: { maxTicksLimit: 12 }
                         }
                     }
-                }
+                },
+                plugins: [horizontalLinePlugin]
             });
         }
 
@@ -371,7 +460,6 @@
 
             if (dataPoints.length === 0) return;
 
-            // Calculate bins
             const cleanData = dataPoints.filter(d => typeof d === 'number');
             if (cleanData.length === 0) return;
 
@@ -382,7 +470,7 @@
             if (!binWidth || binWidth <= 0) binWidth = 5;
 
             const binCount = Math.ceil((max - min) / binWidth);
-            // Limit excessive bins to prevent browser hang
+            // Limit excessive bins
             if (binCount > 1000) {
                  console.warn("Too many bins, capping at 1000");
             }
@@ -391,20 +479,32 @@
             const bins = new Array(safeBinCount).fill(0);
             const binLabels = [];
 
-            // Initialize labels
             for (let i = 0; i < safeBinCount; i++) {
                 const start = min + i * binWidth;
                 const end = min + (i + 1) * binWidth;
                 binLabels.push(`${Math.round(start*10)/10}-${Math.round(end*10)/10}`);
             }
 
-            // Fill bins
             cleanData.forEach(val => {
                 let index = Math.floor((val - min) / binWidth);
                 if (index >= safeBinCount) index = safeBinCount - 1;
                 if (index < 0) index = 0;
                 bins[index]++;
             });
+
+            // True Value Inputs
+            const trueCount = parseFloat(document.getElementById('trueDataCount').value);
+            const trueAvg = parseFloat(document.getElementById('trueAvgDist').value);
+            const trueMax = parseFloat(document.getElementById('trueMaxDist').value);
+
+            const hLines = [];
+            if (!isNaN(trueCount)) hLines.push({ value: trueCount, color: 'red' });
+
+            const vLines = [];
+            if (!isNaN(trueAvg)) vLines.push({ value: trueAvg, color: 'red' });
+            if (!isNaN(trueMax)) vLines.push({ value: trueMax, color: 'red' });
+
+            const range = safeBinCount * binWidth;
 
             histogramChart = new Chart(ctx, {
                 type: 'bar',
@@ -429,6 +529,15 @@
                             callbacks: {
                                 title: (items) => `Range: ${items[0].label}`,
                             }
+                        },
+                        horizontalLinePlugin: {
+                            lines: hLines
+                        },
+                        verticalLinePlugin: {
+                            lines: vLines,
+                            min: min,
+                            binWidth: binWidth,
+                            range: range
                         }
                     },
                     scales: {
@@ -444,7 +553,8 @@
                             ticks: { font: { size: 10 } }
                         }
                     }
-                }
+                },
+                plugins: [horizontalLinePlugin, verticalLinePlugin]
             });
         }
     </script>
