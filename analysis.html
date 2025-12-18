@@ -94,22 +94,85 @@
 
                     <!-- 結果表示 -->
                     <div id="results" class="hidden border-t border-slate-100 pt-6 mt-6">
-                        <div class="grid grid-cols-3 gap-4 mb-6 text-center">
-                            <div class="p-3 bg-slate-50 rounded-lg">
-                                <div class="text-xs text-slate-400 mb-1">データ数</div>
-                                <div class="text-lg font-bold text-slate-800" id="rowCount">-</div>
-                            </div>
-                            <div class="p-3 bg-slate-50 rounded-lg">
-                                <div class="text-xs text-slate-400 mb-1">平均距離</div>
-                                <div class="text-lg font-bold text-blue-600" id="avgValue">-</div>
-                            </div>
-                            <div class="p-3 bg-slate-50 rounded-lg">
-                                <div class="text-xs text-slate-400 mb-1">最大距離</div>
-                                <div class="text-lg font-bold text-green-600" id="maxValue">-</div>
+
+                        <!-- フィルターコントロール -->
+                        <div class="flex items-center gap-4 mb-6">
+                            <span class="text-sm font-bold text-slate-600">表示データ:</span>
+                            <div class="flex bg-slate-100 p-1 rounded-lg">
+                                <label class="cursor-pointer">
+                                    <input type="radio" name="filterMode" value="all" class="peer sr-only" checked onchange="updateCharts()">
+                                    <span class="block px-4 py-2 text-sm rounded-md transition-all text-slate-500 peer-checked:bg-white peer-checked:text-blue-600 peer-checked:shadow-sm peer-checked:font-bold">
+                                        All
+                                    </span>
+                                </label>
+                                <label class="cursor-pointer">
+                                    <input type="radio" name="filterMode" value="los" class="peer sr-only" onchange="updateCharts()">
+                                    <span class="block px-4 py-2 text-sm rounded-md transition-all text-slate-500 peer-checked:bg-white peer-checked:text-blue-600 peer-checked:shadow-sm peer-checked:font-bold">
+                                        LOS only
+                                    </span>
+                                </label>
+                                <label class="cursor-pointer">
+                                    <input type="radio" name="filterMode" value="nlos" class="peer sr-only" onchange="updateCharts()">
+                                    <span class="block px-4 py-2 text-sm rounded-md transition-all text-slate-500 peer-checked:bg-white peer-checked:text-blue-600 peer-checked:shadow-sm peer-checked:font-bold">
+                                        NLOS only
+                                    </span>
+                                </label>
                             </div>
                         </div>
-                        <div class="relative h-96 w-full">
-                            <canvas id="myChart"></canvas>
+
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                            <!-- 統計情報 -->
+                            <div class="grid grid-cols-3 gap-4 text-center h-min">
+                                <div class="p-3 bg-slate-50 rounded-lg">
+                                    <div class="text-xs text-slate-400 mb-1">データ数</div>
+                                    <div class="text-lg font-bold text-slate-800 mb-2" id="rowCount">-</div>
+                                </div>
+                                <div class="p-3 bg-slate-50 rounded-lg">
+                                    <div class="text-xs text-slate-400 mb-1">平均距離</div>
+                                    <div class="text-lg font-bold text-blue-600 mb-2" id="avgValue">-</div>
+                                </div>
+                                <div class="p-3 bg-slate-50 rounded-lg">
+                                    <div class="text-xs text-slate-400 mb-1">最大距離</div>
+                                    <div class="text-lg font-bold text-green-600 mb-2" id="maxValue">-</div>
+                                </div>
+                            </div>
+
+                            <!-- NLOS円グラフ -->
+                            <div class="bg-slate-50 rounded-lg p-4 flex flex-col items-center justify-center">
+                                <h4 class="text-sm font-bold text-slate-600 mb-2">通信環境 (LOS / NLOS)</h4>
+                                <div class="relative h-48 w-full max-w-xs">
+                                    <canvas id="nlosChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 時系列グラフ -->
+                        <div class="bg-white border border-slate-200 rounded-xl p-4 shadow-sm mb-6">
+                            <div class="flex justify-between items-center mb-2">
+                                <h4 class="text-sm font-bold text-slate-600 mb-2">時系列データ推移</h4>
+                                    <div class="flex items-center gap-2">
+                                        <label for="trueAvgDist" class="text-xs text-slate-500 font-medium">真値 (cm):</label>
+                                        <input type="number" id="trueAvgDist" placeholder="真値" class="w-full text-xs border border-slate-300 rounded px-1 py-1 text-center" onchange="updateCharts()">
+                                    </div>
+                            </div>
+                            <div class="relative h-96 w-full">
+                                <canvas id="myChart"></canvas>
+
+                            </div>
+                        </div>
+
+                        <!-- ヒストグラム -->
+                        <div class="bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
+                            <div class="flex justify-between items-center mb-2">
+                                <h4 class="text-sm font-bold text-slate-600">距離分布 (ヒストグラム)</h4>
+                                <div class="flex items-center gap-2">
+                                    <label for="binWidth" class="text-xs text-slate-500 font-medium">Bin Width (cm):</label>
+                                    <input type="number" id="binWidth" step="0.5" min="0.5" class="w-20 text-sm border border-slate-300 rounded px-2 py-1" onchange="updateCharts()">
+                                </div>
+                            </div>
+                            <div class="relative h-64 w-full">
+                                <canvas id="histogramChart"></canvas>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -142,6 +205,9 @@
     <!-- 解析ロジック -->
     <script>
         let myChart = null;
+        let nlosChart = null;
+        let histogramChart = null;
+        let rawCsvData = [];
 
         function processCSV() {
             const fileInput = document.getElementById('csvFile');
@@ -171,7 +237,21 @@
                 return;
             }
 
-            const labels = data.map(row => row.time);
+            // Store raw data for filtering
+            rawCsvData = data;
+
+            // Draw Pie Chart for NLOS
+            const losCount = data.filter(row => row.nlos === 0).length;
+            const nlosCount = data.filter(row => row.nlos === 1).length;
+            drawPieChart(losCount, nlosCount);
+
+            // Draw Charts and update stats (initial state based on checked radio)
+            updateCharts();
+
+            document.getElementById('results').classList.remove('hidden');
+        }
+
+        function updateStats(data) {
             const distances = data.map(row => row.distance);
             const cleanDistances = distances.filter(d => typeof d === 'number');
 
@@ -183,9 +263,143 @@
             document.getElementById('rowCount').innerText = count + " 行";
             document.getElementById('avgValue').innerText = avg + " cm";
             document.getElementById('maxValue').innerText = max + " cm";
+        }
 
+        function drawPieChart(losCount, nlosCount) {
+            const ctx = document.getElementById('nlosChart').getContext('2d');
+
+            if (nlosChart) {
+                nlosChart.destroy();
+            }
+
+            nlosChart = new Chart(ctx, {
+                type: 'pie',
+                data: {
+                    labels: ['LOS (見通し内)', 'NLOS (見通し外)'],
+                    datasets: [{
+                        data: [losCount, nlosCount],
+                        backgroundColor: [
+                            'rgba(59, 130, 246, 0.8)', // Blue-500
+                            'rgba(239, 68, 68, 0.8)'   // Red-500
+                        ],
+                        borderColor: [
+                            'rgba(59, 130, 246, 1)',
+                            'rgba(239, 68, 68, 1)'
+                        ],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                boxWidth: 12,
+                                font: { size: 10 }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Plugin to draw horizontal reference lines
+        const horizontalLinePlugin = {
+            id: 'horizontalLinePlugin',
+            afterDatasetsDraw(chart, args, options) {
+                const { ctx, chartArea: { left, right, top, bottom }, scales: { x, y } } = chart;
+
+                if (!options.lines || options.lines.length === 0) return;
+
+                ctx.save();
+                options.lines.forEach(line => {
+                    const yVal = line.value;
+                    if (yVal === null || yVal === undefined || isNaN(yVal)) return;
+
+                    const yPixel = y.getPixelForValue(yVal);
+                    if (yPixel < top || yPixel > bottom) return; // Skip if out of view
+
+                    ctx.beginPath();
+                    ctx.strokeStyle = line.color || 'red';
+                    ctx.lineWidth = line.width || 2;
+                    ctx.moveTo(left, yPixel);
+                    ctx.lineTo(right, yPixel);
+                    ctx.stroke();
+                });
+                ctx.restore();
+            }
+        };
+
+        // Plugin to draw vertical reference lines (on category axis, approximated)
+        const verticalLinePlugin = {
+            id: 'verticalLinePlugin',
+            afterDatasetsDraw(chart, args, options) {
+                const { ctx, chartArea: { left, right, top, bottom }, scales: { x, y } } = chart;
+
+                if (!options.lines || options.lines.length === 0) return;
+
+                // We need min/max/binWidth to calculate position if axis is category
+                const min = options.min;
+                const binWidth = options.binWidth;
+                const totalWidth = right - left;
+                // Calculate total range covered by bins (safeBinCount * binWidth)
+                const range = options.range;
+
+                ctx.save();
+                options.lines.forEach(line => {
+                    const val = line.value;
+                    if (val === null || val === undefined || isNaN(val)) return;
+
+                    let xPixel;
+
+                    if (range && binWidth) {
+                         // Linear interpolation based on known range of the histogram
+                         const offset = val - min;
+                         const ratio = offset / range;
+                         // Adjust for padding or bar centering?
+                         // Chart.js Category axis draws bars from left to right covering the area.
+                         // Using ratio * totalWidth is a reasonable approximation for visual reference
+                         xPixel = left + (ratio * totalWidth);
+                    } else {
+                        // Fallback or other logic if we had a linear axis
+                        xPixel = x.getPixelForValue(val);
+                    }
+
+                    if (xPixel < left || xPixel > right) return;
+
+                    ctx.beginPath();
+                    ctx.strokeStyle = line.color || 'red';
+                    ctx.lineWidth = line.width || 2;
+                    ctx.moveTo(xPixel, top);
+                    ctx.lineTo(xPixel, bottom);
+                    ctx.stroke();
+                });
+                ctx.restore();
+            }
+        };
+
+        function updateCharts() {
+            const filterMode = document.querySelector('input[name="filterMode"]:checked').value;
+
+            let filteredData = rawCsvData;
+            if (filterMode === 'los') {
+                filteredData = rawCsvData.filter(row => row.nlos === 0);
+            } else if (filterMode === 'nlos') {
+                filteredData = rawCsvData.filter(row => row.nlos === 1);
+            }
+
+            // Update stats based on filtered data
+            updateStats(filteredData);
+
+            const labels = filteredData.map(row => row.time);
+            const distances = filteredData.map(row => row.distance);
+
+            // Draw Line Chart
             drawChart(labels, distances);
-            document.getElementById('results').classList.remove('hidden');
+            // Draw Histogram
+            drawHistogram(distances);
         }
 
         function drawChart(labels, dataPoints) {
@@ -194,6 +408,12 @@
             if (myChart) {
                 myChart.destroy();
             }
+
+            // Only use Average Distance as the reference line for Time Series
+            const trueAvg = parseFloat(document.getElementById('trueAvgDist').value);
+
+            const lines = [];
+            if (!isNaN(trueAvg)) lines.push({ value: trueAvg, color: 'red' });
 
             myChart = new Chart(ctx, {
                 type: 'line', 
@@ -220,13 +440,120 @@
                     },
                     plugins: {
                         legend: { position: 'top' },
+                        horizontalLinePlugin: {
+                            lines: lines
+                        }
                     },
                     scales: {
                         x: {
                             ticks: { maxTicksLimit: 12 }
                         }
                     }
-                }
+                },
+                plugins: [horizontalLinePlugin]
+            });
+        }
+
+        function drawHistogram(dataPoints) {
+            const ctx = document.getElementById('histogramChart').getContext('2d');
+
+            if (histogramChart) {
+                histogramChart.destroy();
+            }
+
+            if (dataPoints.length === 0) return;
+
+            const cleanData = dataPoints.filter(d => typeof d === 'number');
+            if (cleanData.length === 0) return;
+
+            const min = Math.min(...cleanData);
+            const max = Math.max(...cleanData);
+
+            let binWidth = parseFloat(document.getElementById('binWidth').value);
+            if (!binWidth || binWidth <= 0) binWidth = 5;
+
+            const binCount = Math.ceil((max - min) / binWidth);
+            // Limit excessive bins
+            if (binCount > 1000) {
+                 console.warn("Too many bins, capping at 1000");
+            }
+            const safeBinCount = Math.min(binCount, 1000);
+
+            const bins = new Array(safeBinCount).fill(0);
+            const binLabels = [];
+
+            for (let i = 0; i < safeBinCount; i++) {
+                const start = min + i * binWidth;
+                const end = min + (i + 1) * binWidth;
+                binLabels.push(`${Math.round(start*10)/10}-${Math.round(end*10)/10}`);
+            }
+
+            cleanData.forEach(val => {
+                let index = Math.floor((val - min) / binWidth);
+                if (index >= safeBinCount) index = safeBinCount - 1;
+                if (index < 0) index = 0;
+                bins[index]++;
+            });
+
+            // True Value Inputs
+            const trueAvg = parseFloat(document.getElementById('trueAvgDist').value);
+
+            const hLines = [];
+
+            const vLines = [];
+            if (!isNaN(trueAvg)) vLines.push({ value: trueAvg, color: 'red' });
+
+            const range = safeBinCount * binWidth;
+
+            histogramChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: binLabels,
+                    datasets: [{
+                        label: 'Frequency',
+                        data: bins,
+                        backgroundColor: 'rgba(59, 130, 246, 0.6)',
+                        borderColor: 'rgba(59, 130, 246, 1)',
+                        borderWidth: 1,
+                        barPercentage: 1.0,
+                        categoryPercentage: 1.0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                title: (items) => `Range: ${items[0].label}`,
+                            }
+                        },
+                        horizontalLinePlugin: {
+                            lines: hLines
+                        },
+                        verticalLinePlugin: {
+                            lines: vLines,
+                            min: min,
+                            binWidth: binWidth,
+                            range: range
+                        }
+                    },
+                    scales: {
+                        x: {
+                            ticks: {
+                                maxTicksLimit: 5,
+                                font: { size: 10 }
+                            },
+                            grid: { display: false }
+                        },
+                        y: {
+                            beginAtZero: true,
+                            ticks: { font: { size: 10 } }
+                        }
+                    }
+                },
+                plugins: [horizontalLinePlugin, verticalLinePlugin]
             });
         }
     </script>
