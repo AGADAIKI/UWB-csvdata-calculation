@@ -1,8 +1,13 @@
 # UWB analysis | UWBデータ解析ツール
 ##
-[text](https://agadaiki.github.io/UWB-csvdata-calculation/)
+[https://agadaiki.github.io/UWB-csvdata-calculation/](https://agadaiki.github.io/UWB-csvdata-calculation/)
 ## 概要
-UWB analysisは, 「MURATA UWB Type 2BP」 の出力ファイルに焦点を当てた解析ツールである.
+UWB analysisは, 「MURATA UWB Type 2BP」 の出力csvファイルに焦点を当てた解析ツールである.
+
+## TODO 
+* 出力グラフの保存
+* Type 2BP の .binファイル書き換えのGUI化
+
 ##  ファイル構成
 * index.html: ポータル画面。各ツールへのリンクと更新履歴を表示。
 * analysis.html: CSV解析ツール本体。PapaParseとChart.jsを使用。
