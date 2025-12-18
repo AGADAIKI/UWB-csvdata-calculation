@@ -126,17 +126,14 @@
                                 <div class="p-3 bg-slate-50 rounded-lg">
                                     <div class="text-xs text-slate-400 mb-1">データ数</div>
                                     <div class="text-lg font-bold text-slate-800 mb-2" id="rowCount">-</div>
-                                    <input type="number" id="trueDataCount" placeholder="真値" class="w-full text-xs border border-slate-300 rounded px-1 py-1 text-center" onchange="updateCharts()">
                                 </div>
                                 <div class="p-3 bg-slate-50 rounded-lg">
                                     <div class="text-xs text-slate-400 mb-1">平均距離</div>
                                     <div class="text-lg font-bold text-blue-600 mb-2" id="avgValue">-</div>
-                                    <input type="number" id="trueAvgDist" placeholder="真値" class="w-full text-xs border border-slate-300 rounded px-1 py-1 text-center" onchange="updateCharts()">
                                 </div>
                                 <div class="p-3 bg-slate-50 rounded-lg">
                                     <div class="text-xs text-slate-400 mb-1">最大距離</div>
                                     <div class="text-lg font-bold text-green-600 mb-2" id="maxValue">-</div>
-                                    <input type="number" id="trueMaxDist" placeholder="真値" class="w-full text-xs border border-slate-300 rounded px-1 py-1 text-center" onchange="updateCharts()">
                                 </div>
                             </div>
 
@@ -151,9 +148,16 @@
 
                         <!-- 時系列グラフ -->
                         <div class="bg-white border border-slate-200 rounded-xl p-4 shadow-sm mb-6">
-                            <h4 class="text-sm font-bold text-slate-600 mb-2">時系列データ推移</h4>
+                            <div class="flex justify-between items-center mb-2">
+                                <h4 class="text-sm font-bold text-slate-600 mb-2">時系列データ推移</h4>
+                                    <div class="flex items-center gap-2">
+                                        <label for="trueAvgDist" class="text-xs text-slate-500 font-medium">真値 (cm):</label>
+                                        <input type="number" id="trueAvgDist" placeholder="真値" class="w-full text-xs border border-slate-300 rounded px-1 py-1 text-center" onchange="updateCharts()">
+                                    </div>
+                            </div>
                             <div class="relative h-96 w-full">
                                 <canvas id="myChart"></canvas>
+
                             </div>
                         </div>
 
@@ -492,16 +496,12 @@
             });
 
             // True Value Inputs
-            const trueCount = parseFloat(document.getElementById('trueDataCount').value);
             const trueAvg = parseFloat(document.getElementById('trueAvgDist').value);
-            const trueMax = parseFloat(document.getElementById('trueMaxDist').value);
 
             const hLines = [];
-            if (!isNaN(trueCount)) hLines.push({ value: trueCount, color: 'red' });
 
             const vLines = [];
             if (!isNaN(trueAvg)) vLines.push({ value: trueAvg, color: 'red' });
-            if (!isNaN(trueMax)) vLines.push({ value: trueMax, color: 'red' });
 
             const range = safeBinCount * binWidth;
 
