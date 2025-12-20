@@ -117,6 +117,12 @@
                                         NLOS only
                                     </span>
                                 </label>
+                                <label class="cursor-pointer">
+                                    <input type="radio" name="filterMode" value="exc" class="peer sr-only" onchange="updateCharts()">
+                                    <span class="block px-4 py-2 text-sm rounded-md transition-all text-slate-500 peer-checked:bg-white peer-checked:text-blue-600 peer-checked:shadow-sm peer-checked:font-bold">
+                                        exc
+                                    </span>
+                                </label>
                             </div>
                         </div>
 
@@ -388,6 +394,8 @@
                 filteredData = rawCsvData.filter(row => row.nlos === 0);
             } else if (filterMode === 'nlos') {
                 filteredData = rawCsvData.filter(row => row.nlos === 1);
+            } else if (filterMode === 'exc') {
+                filteredData = rawCsvData.filter(row => row.nlos !== -1);
             }
 
             // Update stats based on filtered data
