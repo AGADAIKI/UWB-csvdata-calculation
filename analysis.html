@@ -165,7 +165,13 @@
                                 </div>
                                 <!-- Pie Chart -->
                                 <div class="bg-slate-50 rounded-lg p-4 flex flex-col items-center justify-center">
-                                    <h4 class="text-sm font-bold text-slate-600 mb-2">Environment (LOS / NLOS)</h4>
+                                    <div class="flex justify-between w-full items-center mb-2">
+                                        <h4 class="text-sm font-bold text-slate-600">Environment</h4>
+                                        <button onclick="downloadChart('nlosChart', 'single_file_nlos.png')" class="text-xs bg-white border border-slate-300 hover:bg-slate-100 text-slate-600 px-2 py-1 rounded shadow-sm flex items-center gap-1">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+                                            PNG
+                                        </button>
+                                    </div>
                                     <div class="relative h-48 w-full max-w-xs">
                                         <canvas id="nlosChart"></canvas>
                                     </div>
@@ -179,6 +185,10 @@
                                     <div class="flex items-center gap-2">
                                         <label for="trueAvgDist" class="text-xs text-slate-500 font-medium">True Avg (cm):</label>
                                         <input type="number" id="trueAvgDist" placeholder="Optional" class="w-24 text-xs border border-slate-300 rounded px-1 py-1 text-center" onchange="updateSingleCharts()">
+                                        <button onclick="downloadChart('myChart', 'single_file_dist_timeseries.png')" class="text-xs bg-white border border-slate-300 hover:bg-slate-50 text-slate-600 px-2 py-1 rounded shadow-sm flex items-center gap-1">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+                                            Save PNG
+                                        </button>
                                     </div>
                                 </div>
                                 <div class="relative h-96 w-full">
@@ -193,6 +203,10 @@
                                     <div class="flex items-center gap-2">
                                         <label for="binWidth" class="text-xs text-slate-500 font-medium">Bin (cm):</label>
                                         <input type="number" id="binWidth" step="0.5" min="0.5" class="w-20 text-sm border border-slate-300 rounded px-2 py-1" onchange="updateSingleCharts()">
+                                        <button onclick="downloadChart('histogramChart', 'single_file_dist_histogram.png')" class="text-xs bg-white border border-slate-300 hover:bg-slate-50 text-slate-600 px-2 py-1 rounded shadow-sm flex items-center gap-1">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+                                            Save PNG
+                                        </button>
                                     </div>
                                 </div>
                                 <div class="relative h-64 w-full">
@@ -207,7 +221,13 @@
 
                             <!-- RSSI Time Series -->
                             <div class="bg-white border border-slate-200 rounded-xl p-4 shadow-sm mb-6">
-                                <h4 class="text-sm font-bold text-slate-600 mb-2">RSSI Time Series</h4>
+                                <div class="flex justify-between items-center mb-2">
+                                    <h4 class="text-sm font-bold text-slate-600 mb-2">RSSI Time Series</h4>
+                                    <button onclick="downloadChart('rssiTimeSeriesChart', 'single_file_rssi_timeseries.png')" class="text-xs bg-white border border-slate-300 hover:bg-slate-50 text-slate-600 px-2 py-1 rounded shadow-sm flex items-center gap-1">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+                                        Save PNG
+                                    </button>
+                                </div>
                                 <div class="relative h-64 w-full">
                                     <canvas id="rssiTimeSeriesChart"></canvas>
                                 </div>
@@ -220,6 +240,10 @@
                                     <div class="flex items-center gap-2">
                                         <label for="binWidthRssi" class="text-xs text-slate-500 font-medium">Bin (dBm):</label>
                                         <input type="number" id="binWidthRssi" step="1" min="1" value="1" class="w-20 text-sm border border-slate-300 rounded px-2 py-1" onchange="updateSingleCharts()">
+                                        <button onclick="downloadChart('rssiHistogramChart', 'single_file_rssi_histogram.png')" class="text-xs bg-white border border-slate-300 hover:bg-slate-50 text-slate-600 px-2 py-1 rounded shadow-sm flex items-center gap-1">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+                                            Save PNG
+                                        </button>
                                     </div>
                                 </div>
                                 <div class="relative h-64 w-full">
@@ -299,7 +323,34 @@
 
                         <!-- Accuracy Results -->
                         <div id="results-accuracy" class="hidden mt-8 border-t border-slate-100 pt-6">
-                             <h2 class="text-lg font-bold text-slate-800 mb-4">Accuracy Characteristics</h2>
+                            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-4">
+                                 <h2 class="text-lg font-bold text-slate-800">Accuracy Characteristics</h2>
+
+                                 <div class="flex flex-wrap items-center gap-6 justify-end">
+                                    <!-- Toggles -->
+                                    <label class="inline-flex items-center cursor-pointer">
+                                        <input type="checkbox" id="toggleDist" class="sr-only peer" checked onchange="toggleAccuracyDataset(0)">
+                                        <div class="relative w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-indigo-600"></div>
+                                        <span class="ms-2 text-sm font-medium text-slate-600">Measured Dist</span>
+                                    </label>
+                                    <label class="inline-flex items-center cursor-pointer">
+                                        <input type="checkbox" id="toggleRssi" class="sr-only peer" checked onchange="toggleAccuracyDataset(1)">
+                                        <div class="relative w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-orange-500"></div>
+                                        <span class="ms-2 text-sm font-medium text-slate-600">Avg RSSI</span>
+                                    </label>
+                                    <label class="inline-flex items-center cursor-pointer">
+                                        <input type="checkbox" id="toggleIdeal" class="sr-only peer" checked onchange="toggleAccuracyDataset(2)">
+                                        <div class="relative w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-slate-400"></div>
+                                        <span class="ms-2 text-sm font-medium text-slate-600">Ideal Line</span>
+                                    </label>
+
+                                    <!-- Download -->
+                                    <button onclick="downloadChart('accuracyChart', 'analysis_dist_accuracy.png')" class="text-xs bg-white border border-slate-300 hover:bg-slate-50 text-slate-600 px-3 py-1.5 rounded shadow-sm flex items-center gap-1">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+                                        Save PNG
+                                    </button>
+                                 </div>
+                            </div>
                              <div class="relative h-96 w-full">
                                 <canvas id="accuracyChart"></canvas>
                              </div>
@@ -431,6 +482,25 @@
                 // Menu
                 menuSingle.className = "block px-4 py-3 text-sm font-medium text-slate-600 hover:bg-slate-50 hover:text-blue-600 border-l-4 border-transparent hover:border-blue-600 transition-colors";
                 menuAcc.className = "block px-4 py-3 text-sm font-medium text-indigo-600 bg-indigo-50 border-l-4 border-indigo-600 transition-colors";
+            }
+        }
+
+        function downloadChart(chartId, fileName) {
+            const canvas = document.getElementById(chartId);
+            if (!canvas) return;
+            const link = document.createElement('a');
+            link.download = fileName;
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        }
+
+        function toggleAccuracyDataset(index) {
+            if (!accuracyChart) return;
+            const isVisible = accuracyChart.isDatasetVisible(index);
+            if (isVisible) {
+                accuracyChart.hide(index);
+            } else {
+                accuracyChart.show(index);
             }
         }
 
@@ -864,6 +934,21 @@
                     }
                 }
             });
+
+            // Re-apply toggle states
+            syncToggles();
+        }
+
+        function syncToggles() {
+            if (!accuracyChart) return;
+            const t0 = document.getElementById('toggleDist').checked;
+            const t1 = document.getElementById('toggleRssi').checked;
+            const t2 = document.getElementById('toggleIdeal').checked;
+
+            accuracyChart.setDatasetVisibility(0, t0);
+            accuracyChart.setDatasetVisibility(1, t1);
+            accuracyChart.setDatasetVisibility(2, t2);
+            accuracyChart.update();
         }
 
     </script>
