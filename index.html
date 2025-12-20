@@ -43,8 +43,13 @@
                             </a>
                         </li>
                         <li>
-                            <a href="analysis.html" class="block px-4 py-3 text-sm font-medium text-slate-600 hover:bg-slate-50 hover:text-blue-600 border-l-4 border-transparent hover:border-blue-600 transition-colors">
-                                CSV解析ツール
+                            <a href="analysis.html#single" class="block px-4 py-3 text-sm font-medium text-slate-600 hover:bg-slate-50 hover:text-blue-600 border-l-4 border-transparent hover:border-blue-600 transition-colors">
+                                Single File Analysis
+                            </a>
+                        </li>
+                        <li>
+                            <a href="analysis.html#accuracy" class="block px-4 py-3 text-sm font-medium text-slate-600 hover:bg-slate-50 hover:text-blue-600 border-l-4 border-transparent hover:border-blue-600 transition-colors">
+                                Distance Accuracy Analysis
                             </a>
                         </li>
                     </ul>
@@ -63,16 +68,28 @@
                 </h2>
                 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <!-- ツールカード: CSV解析 -->
-                    <a href="analysis.html" class="group block bg-white rounded-xl shadow-sm border border-slate-200 p-6 hover:shadow-md hover:border-blue-300 transition-all duration-200">
+                    <!-- ツールカード: Single File Analysis -->
+                    <a href="analysis.html#single" class="group block bg-white rounded-xl shadow-sm border border-slate-200 p-6 hover:shadow-md hover:border-blue-300 transition-all duration-200">
                         <div class="flex items-center justify-between mb-4">
                             <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center text-blue-600">
                                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
                             </div>
                             <span class="text-xs font-semibold bg-green-100 text-green-800 px-2 py-1 rounded-full">Available</span>
                         </div>
-                        <h3 class="text-lg font-bold text-slate-800 group-hover:text-blue-600 transition-colors">CSV解析ツール</h3>
+                        <h3 class="text-lg font-bold text-slate-800 group-hover:text-blue-600 transition-colors">Single File Analysis</h3>
                         <p class="text-sm text-slate-500 mt-2">ログデータ(.csv)をアップロードし、距離と時間の相関をグラフ化します。</p>
+                    </a>
+
+                    <!-- ツールカード: Distance Accuracy Analysis -->
+                    <a href="analysis.html#accuracy" class="group block bg-white rounded-xl shadow-sm border border-slate-200 p-6 hover:shadow-md hover:border-blue-300 transition-all duration-200">
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="w-12 h-12 bg-indigo-100 rounded-lg flex items-center justify-center text-indigo-600">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"></path></svg>
+                            </div>
+                            <span class="text-xs font-semibold bg-green-100 text-green-800 px-2 py-1 rounded-full">New</span>
+                        </div>
+                        <h3 class="text-lg font-bold text-slate-800 group-hover:text-indigo-600 transition-colors">Distance Accuracy Analysis</h3>
+                        <p class="text-sm text-slate-500 mt-2">複数の計測データを統合し、真値と計測値の精度特性を分析します。</p>
                     </a>
 
                     <!-- ツールカード: 今後の予定 (プレースホルダー) -->
