@@ -145,7 +145,7 @@
 
                             <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
                                 <!-- Stats -->
-                                <div class="grid grid-cols-3 gap-4 text-center h-min">
+                                <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center h-min">
                                     <div class="p-3 bg-slate-50 rounded-lg">
                                         <div class="text-xs text-slate-400 mb-1">Count</div>
                                         <div class="text-lg font-bold text-slate-800 mb-2" id="rowCount">-</div>
@@ -157,6 +157,10 @@
                                     <div class="p-3 bg-slate-50 rounded-lg">
                                         <div class="text-xs text-slate-400 mb-1">Max Dist</div>
                                         <div class="text-lg font-bold text-green-600 mb-2" id="maxValue">-</div>
+                                    </div>
+                                    <div class="p-3 bg-slate-50 rounded-lg">
+                                        <div class="text-xs text-slate-400 mb-1">Avg RSSI</div>
+                                        <div class="text-lg font-bold text-orange-500 mb-2" id="avgRssi">-</div>
                                     </div>
                                 </div>
                                 <!-- Pie Chart -->
@@ -183,7 +187,7 @@
                             </div>
 
                             <!-- Histogram -->
-                            <div class="bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
+                            <div class="bg-white border border-slate-200 rounded-xl p-4 shadow-sm mb-6">
                                 <div class="flex justify-between items-center mb-2">
                                     <h4 class="text-sm font-bold text-slate-600">Distance Distribution</h4>
                                     <div class="flex items-center gap-2">
@@ -193,6 +197,33 @@
                                 </div>
                                 <div class="relative h-64 w-full">
                                     <canvas id="histogramChart"></canvas>
+                                </div>
+                            </div>
+
+                            <hr class="border-slate-100 my-8">
+
+                            <!-- RSSI Section -->
+                            <h3 class="text-md font-bold text-slate-700 mb-4">RSSI Analysis</h3>
+
+                            <!-- RSSI Time Series -->
+                            <div class="bg-white border border-slate-200 rounded-xl p-4 shadow-sm mb-6">
+                                <h4 class="text-sm font-bold text-slate-600 mb-2">RSSI Time Series</h4>
+                                <div class="relative h-64 w-full">
+                                    <canvas id="rssiTimeSeriesChart"></canvas>
+                                </div>
+                            </div>
+
+                            <!-- RSSI Histogram -->
+                            <div class="bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
+                                <div class="flex justify-between items-center mb-2">
+                                    <h4 class="text-sm font-bold text-slate-600">RSSI Distribution</h4>
+                                    <div class="flex items-center gap-2">
+                                        <label for="binWidthRssi" class="text-xs text-slate-500 font-medium">Bin (dBm):</label>
+                                        <input type="number" id="binWidthRssi" step="1" min="1" value="1" class="w-20 text-sm border border-slate-300 rounded px-2 py-1" onchange="updateSingleCharts()">
+                                    </div>
+                                </div>
+                                <div class="relative h-64 w-full">
+                                    <canvas id="rssiHistogramChart"></canvas>
                                 </div>
                             </div>
                         </div>
@@ -289,7 +320,9 @@
         let singleCharts = {
             line: null,
             hist: null,
-            pie: null
+            pie: null,
+            rssiLine: null,
+            rssiHist: null
         };
         let accuracyChart = null;
         let singleRawData = [];
@@ -304,6 +337,9 @@
                 options.lines.forEach(line => {
                     const yVal = line.value;
                     if (yVal == null || isNaN(yVal)) return;
+                    // Check if y scale handles this value (in case of dual axis, we assume 'y' for horizontal lines unless specified)
+                    // But here we rely on 'y' scale being present.
+                    if (!y) return;
                     const yPixel = y.getPixelForValue(yVal);
                     if (yPixel < top || yPixel > bottom) return;
                     ctx.beginPath();
@@ -435,14 +471,20 @@
 
             // Stats
             const distances = filtered.map(d => d.distance).filter(d => typeof d === 'number');
+            const rssiVals = filtered.map(d => d.rssi).filter(d => typeof d === 'number');
+
             const count = distances.length;
             const sum = distances.reduce((a,b)=>a+b,0);
             const avg = count > 0 ? (sum/count).toFixed(2) : 0;
             const max = count > 0 ? Math.max(...distances) : 0;
-            
+
+            const sumRssi = rssiVals.reduce((a,b)=>a+b,0);
+            const avgRssi = rssiVals.length > 0 ? (sumRssi/rssiVals.length).toFixed(1) : 0;
+
             document.getElementById('rowCount').innerText = count + " rows";
             document.getElementById('avgValue').innerText = avg + " cm";
             document.getElementById('maxValue').innerText = max + " cm";
+            document.getElementById('avgRssi').innerText = avgRssi + " dBm";
 
             // Pie
             drawSinglePie(singleRawData);
@@ -451,6 +493,10 @@
             const labels = filtered.map(d => d.time);
             drawSingleLine(labels, distances);
             drawSingleHist(distances);
+
+            // RSSI Charts
+            drawRssiLine(labels, rssiVals);
+            drawRssiHist(rssiVals);
         }
 
         function drawSinglePie(data) {
@@ -555,6 +601,85 @@
              });
         }
 
+        function drawRssiLine(labels, data) {
+            const ctx = document.getElementById('rssiTimeSeriesChart').getContext('2d');
+            if (singleCharts.rssiLine) singleCharts.rssiLine.destroy();
+
+            singleCharts.rssiLine = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'RSSI (dBm)',
+                        data: data,
+                        borderColor: 'rgb(249, 115, 22)', // Orange-500
+                        backgroundColor: 'rgba(249, 115, 22, 0.05)',
+                        borderWidth: 2,
+                        pointRadius: 0,
+                        tension: 0.1,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: { ticks: { maxTicksLimit: 12 } },
+                        y: {
+                            title: { display: true, text: 'RSSI (dBm)' },
+                            suggestedMax: -20,
+                            suggestedMin: -100
+                        }
+                    }
+                }
+            });
+        }
+
+        function drawRssiHist(data) {
+             const ctx = document.getElementById('rssiHistogramChart').getContext('2d');
+             if (singleCharts.rssiHist) singleCharts.rssiHist.destroy();
+             if (data.length === 0) return;
+
+             const min = Math.min(...data);
+             const max = Math.max(...data);
+             let binWidth = parseFloat(document.getElementById('binWidthRssi').value) || 1;
+             const binCount = Math.min(Math.ceil((max - min)/binWidth), 1000);
+
+             const bins = new Array(binCount).fill(0);
+             const binLabels = [];
+             for(let i=0; i<binCount; i++){
+                 const s = min + i*binWidth;
+                 const e = min + (i+1)*binWidth;
+                 binLabels.push(`${s.toFixed(1)}-${e.toFixed(1)}`);
+             }
+             data.forEach(v => {
+                 let idx = Math.floor((v-min)/binWidth);
+                 if (idx >= binCount) idx = binCount-1;
+                 if (idx < 0) idx = 0;
+                 bins[idx]++;
+             });
+
+             singleCharts.rssiHist = new Chart(ctx, {
+                 type: 'bar',
+                 data: {
+                     labels: binLabels,
+                     datasets: [{
+                         label: 'Frequency',
+                         data: bins,
+                         backgroundColor: 'rgba(249, 115, 22, 0.6)' // Orange
+                     }]
+                 },
+                 options: {
+                     responsive: true,
+                     maintainAspectRatio: false,
+                     plugins: {
+                         legend: { display: false },
+                     },
+                     scales: { x: { display: false } }
+                 }
+             });
+        }
+
         // --- Accuracy Analysis Logic ---
 
         document.getElementById('csvFilesAcc').addEventListener('change', function(e) {
@@ -599,8 +724,12 @@
 
                 const plotData = [];
                 results.forEach((data, i) => {
-                    const avg = calcAvg(data, filterMode);
-                    plotData.push({ x: configs[i].trueDist, y: avg });
+                    const avgs = calcAvg(data, filterMode);
+                    plotData.push({
+                        x: configs[i].trueDist,
+                        y: avgs.dist,
+                        rssi: avgs.rssi
+                    });
                 });
 
                 plotData.sort((a,b) => a.x - b.x);
@@ -643,10 +772,15 @@
             if (mode === 'nlos') f = data.filter(d => d.nlos === 1);
             if (mode === 'exc') f = data.filter(d => d.nlos !== -1);
 
-            if (f.length === 0) return 0;
-            const vals = f.map(d => d.distance).filter(v => typeof v === 'number');
-            if (vals.length === 0) return 0;
-            return vals.reduce((a,b)=>a+b,0) / vals.length;
+            if (f.length === 0) return { dist: 0, rssi: 0 };
+
+            const dists = f.map(d => d.distance).filter(v => typeof v === 'number');
+            const rssis = f.map(d => d.rssi).filter(v => typeof v === 'number');
+
+            const avgDist = dists.length > 0 ? dists.reduce((a,b)=>a+b,0)/dists.length : 0;
+            const avgRssi = rssis.length > 0 ? rssis.reduce((a,b)=>a+b,0)/rssis.length : 0;
+
+            return { dist: avgDist, rssi: avgRssi };
         }
 
         function drawAccuracyChart(data) {
@@ -656,19 +790,34 @@
             const maxX = data.length > 0 ? data[data.length-1].x : 100;
             const limit = Math.ceil(maxX * 1.1);
 
+            const distData = data.map(d => ({ x: d.x, y: d.y }));
+            const rssiData = data.map(d => ({ x: d.x, y: d.rssi }));
+
             accuracyChart = new Chart(ctx, {
                 type: 'line',
                 data: {
                     datasets: [
                         {
-                            label: 'Measured Average',
-                            data: data,
-                            borderColor: 'rgb(79, 70, 229)',
+                            label: 'Measured Avg Dist (cm)',
+                            data: distData,
+                            borderColor: 'rgb(79, 70, 229)', // Indigo
                             backgroundColor: 'rgba(79, 70, 229, 0.5)',
                             borderWidth: 2,
                             pointRadius: 4,
                             fill: false,
-                            tension: 0
+                            tension: 0,
+                            yAxisID: 'y'
+                        },
+                        {
+                            label: 'Avg RSSI (dBm)',
+                            data: rssiData,
+                            borderColor: 'rgb(249, 115, 22)', // Orange
+                            backgroundColor: 'rgba(249, 115, 22, 0.5)',
+                            borderWidth: 2,
+                            pointRadius: 4,
+                            fill: false,
+                            tension: 0,
+                            yAxisID: 'y1'
                         },
                         {
                             label: 'Ideal (y=x)',
@@ -677,16 +826,41 @@
                             borderWidth: 2,
                             borderDash: [5,5],
                             pointRadius: 0,
-                            fill: false
+                            fill: false,
+                            yAxisID: 'y' // Bind to distance axis
                         }
                     ]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
+                    interaction: {
+                        mode: 'index',
+                        intersect: false,
+                    },
                     scales: {
-                        x: { type: 'linear', position: 'bottom', title: { display: true, text: 'True Distance (cm)' } },
-                        y: { beginAtZero: true, title: { display: true, text: 'Measured Average (cm)' } }
+                        x: {
+                            type: 'linear',
+                            position: 'bottom',
+                            title: { display: true, text: 'True Distance (cm)' }
+                        },
+                        y: {
+                            type: 'linear',
+                            display: true,
+                            position: 'left',
+                            beginAtZero: true,
+                            title: { display: true, text: 'Distance (cm)' }
+                        },
+                        y1: {
+                            type: 'linear',
+                            display: true,
+                            position: 'right',
+                            title: { display: true, text: 'RSSI (dBm)' },
+                            // Typically RSSI is negative, so we don't force beginAtZero
+                            grid: {
+                                drawOnChartArea: false // only want the grid lines for one axis to show up
+                            }
+                        }
                     }
                 }
             });
