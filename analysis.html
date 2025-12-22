@@ -7,6 +7,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@sgratzl/chartjs-chart-boxplot@4"></script>
 </head>
 <body class="bg-slate-50 text-slate-700 antialiased">
 
@@ -329,19 +330,24 @@
                                  <div class="flex flex-wrap items-center gap-6 justify-end">
                                     <!-- Toggles -->
                                     <label class="inline-flex items-center cursor-pointer">
-                                        <input type="checkbox" id="toggleDist" class="sr-only peer" checked onchange="toggleAccuracyDataset(0)">
+                                        <input type="checkbox" id="toggleDist" class="sr-only peer" checked onchange="toggleAccuracyDataset(1)">
                                         <div class="relative w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-indigo-600"></div>
                                         <span class="ms-2 text-sm font-medium text-slate-600">Measured Dist</span>
                                     </label>
                                     <label class="inline-flex items-center cursor-pointer">
-                                        <input type="checkbox" id="toggleRssi" class="sr-only peer" checked onchange="toggleAccuracyDataset(1)">
+                                        <input type="checkbox" id="toggleRssi" class="sr-only peer" checked onchange="toggleAccuracyDataset(2)">
                                         <div class="relative w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-orange-500"></div>
                                         <span class="ms-2 text-sm font-medium text-slate-600">Avg RSSI</span>
                                     </label>
                                     <label class="inline-flex items-center cursor-pointer">
-                                        <input type="checkbox" id="toggleIdeal" class="sr-only peer" checked onchange="toggleAccuracyDataset(2)">
+                                        <input type="checkbox" id="toggleIdeal" class="sr-only peer" checked onchange="toggleAccuracyDataset(3)">
                                         <div class="relative w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-slate-400"></div>
                                         <span class="ms-2 text-sm font-medium text-slate-600">Ideal Line</span>
+                                    </label>
+                                    <label class="inline-flex items-center cursor-pointer">
+                                        <input type="checkbox" id="toggleBox" class="sr-only peer" onchange="toggleAccuracyDataset(0)">
+                                        <div class="relative w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-teal-600"></div>
+                                        <span class="ms-2 text-sm font-medium text-slate-600">Box Plot</span>
                                     </label>
 
                                     <!-- Download -->
@@ -388,8 +394,6 @@
                 options.lines.forEach(line => {
                     const yVal = line.value;
                     if (yVal == null || isNaN(yVal)) return;
-                    // Check if y scale handles this value (in case of dual axis, we assume 'y' for horizontal lines unless specified)
-                    // But here we rely on 'y' scale being present.
                     if (!y) return;
                     const yPixel = y.getPixelForValue(yVal);
                     if (yPixel < top || yPixel > bottom) return;
@@ -463,11 +467,9 @@
                 secSingle.classList.remove('hidden');
                 secAcc.classList.add('hidden');
 
-                // Tabs
                 tabSingle.className = "border-blue-500 text-blue-600 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm";
                 tabAcc.className = "border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm";
 
-                // Menu
                 menuSingle.className = "block px-4 py-3 text-sm font-medium text-blue-600 bg-blue-50 border-l-4 border-blue-600 transition-colors";
                 menuAcc.className = "block px-4 py-3 text-sm font-medium text-slate-600 hover:bg-slate-50 hover:text-indigo-600 border-l-4 border-transparent hover:border-indigo-600 transition-colors";
 
@@ -475,11 +477,9 @@
                 secSingle.classList.add('hidden');
                 secAcc.classList.remove('hidden');
 
-                // Tabs
                 tabSingle.className = "border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm";
                 tabAcc.className = "border-indigo-500 text-indigo-600 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm";
 
-                // Menu
                 menuSingle.className = "block px-4 py-3 text-sm font-medium text-slate-600 hover:bg-slate-50 hover:text-blue-600 border-l-4 border-transparent hover:border-blue-600 transition-colors";
                 menuAcc.className = "block px-4 py-3 text-sm font-medium text-indigo-600 bg-indigo-50 border-l-4 border-indigo-600 transition-colors";
             }
@@ -539,7 +539,6 @@
             if (filterMode === 'nlos') filtered = singleRawData.filter(d => d.nlos === 1);
             if (filterMode === 'exc') filtered = singleRawData.filter(d => d.nlos !== -1);
 
-            // Stats
             const distances = filtered.map(d => d.distance).filter(d => typeof d === 'number');
             const rssiVals = filtered.map(d => d.rssi).filter(d => typeof d === 'number');
 
@@ -556,30 +555,30 @@
             document.getElementById('maxValue').innerText = max + " cm";
             document.getElementById('avgRssi').innerText = avgRssi + " dBm";
 
-            // Pie
             drawSinglePie(singleRawData);
 
-            // Line & Hist
             const labels = filtered.map(d => d.time);
             drawSingleLine(labels, distances);
             drawSingleHist(distances);
 
-            // RSSI Charts
             drawRssiLine(labels, rssiVals);
             drawRssiHist(rssiVals);
         }
 
         function drawSinglePie(data) {
-            const los = data.filter(d => d.nlos === 0).length;
-            const nlos = data.filter(d => d.nlos === 1).length;
             const ctx = document.getElementById('nlosChart').getContext('2d');
-            if (singleCharts.pie) singleCharts.pie.destroy();
+            const existing = Chart.getChart('nlosChart');
+            if (existing) existing.destroy();
+
             singleCharts.pie = new Chart(ctx, {
                 type: 'pie',
                 data: {
                     labels: ['LOS', 'NLOS'],
                     datasets: [{
-                        data: [los, nlos],
+                        data: [
+                            data.filter(d => d.nlos === 0).length,
+                            data.filter(d => d.nlos === 1).length
+                        ],
                         backgroundColor: ['rgba(59, 130, 246, 0.8)', 'rgba(239, 68, 68, 0.8)']
                     }]
                 },
@@ -589,7 +588,8 @@
 
         function drawSingleLine(labels, data) {
             const ctx = document.getElementById('myChart').getContext('2d');
-            if (singleCharts.line) singleCharts.line.destroy();
+            const existing = Chart.getChart('myChart');
+            if (existing) existing.destroy();
 
             const trueAvg = parseFloat(document.getElementById('trueAvgDist').value);
             const lines = [];
@@ -622,7 +622,9 @@
 
         function drawSingleHist(data) {
              const ctx = document.getElementById('histogramChart').getContext('2d');
-             if (singleCharts.hist) singleCharts.hist.destroy();
+             const existing = Chart.getChart('histogramChart');
+             if (existing) existing.destroy();
+
              if (data.length === 0) return;
 
              const min = Math.min(...data);
@@ -673,7 +675,8 @@
 
         function drawRssiLine(labels, data) {
             const ctx = document.getElementById('rssiTimeSeriesChart').getContext('2d');
-            if (singleCharts.rssiLine) singleCharts.rssiLine.destroy();
+            const existing = Chart.getChart('rssiTimeSeriesChart');
+            if (existing) existing.destroy();
 
             singleCharts.rssiLine = new Chart(ctx, {
                 type: 'line',
@@ -682,7 +685,7 @@
                     datasets: [{
                         label: 'RSSI (dBm)',
                         data: data,
-                        borderColor: 'rgb(249, 115, 22)', // Orange-500
+                        borderColor: 'rgb(249, 115, 22)',
                         backgroundColor: 'rgba(249, 115, 22, 0.05)',
                         borderWidth: 2,
                         pointRadius: 0,
@@ -707,7 +710,9 @@
 
         function drawRssiHist(data) {
              const ctx = document.getElementById('rssiHistogramChart').getContext('2d');
-             if (singleCharts.rssiHist) singleCharts.rssiHist.destroy();
+             const existing = Chart.getChart('rssiHistogramChart');
+             if (existing) existing.destroy();
+
              if (data.length === 0) return;
 
              const min = Math.min(...data);
@@ -736,7 +741,7 @@
                      datasets: [{
                          label: 'Frequency',
                          data: bins,
-                         backgroundColor: 'rgba(249, 115, 22, 0.6)' // Orange
+                         backgroundColor: 'rgba(249, 115, 22, 0.6)'
                      }]
                  },
                  options: {
@@ -779,7 +784,6 @@
             const inputs = document.querySelectorAll('.true-dist-input');
             const filterMode = document.querySelector('input[name="filterModeAcc"]:checked').value;
 
-            // Validate
             const configs = [];
             for(let i=0; i<files.length; i++) {
                 const val = inputs[i].value;
@@ -798,7 +802,8 @@
                     plotData.push({
                         x: configs[i].trueDist,
                         y: avgs.dist,
-                        rssi: avgs.rssi
+                        rssi: avgs.rssi,
+                        rawDist: avgs.rawDist
                     });
                 });
 
@@ -823,7 +828,6 @@
                     skipEmptyLines: true,
                     worker: true,
                     complete: (results) => {
-                        // Post-process header trimming
                         const clean = results.data.map(r => {
                             const nr = {};
                             Object.keys(r).forEach(k => nr[k.trim()] = r[k]);
@@ -842,7 +846,7 @@
             if (mode === 'nlos') f = data.filter(d => d.nlos === 1);
             if (mode === 'exc') f = data.filter(d => d.nlos !== -1);
 
-            if (f.length === 0) return { dist: 0, rssi: 0 };
+            if (f.length === 0) return { dist: 0, rssi: 0, rawDist: [] };
 
             const dists = f.map(d => d.distance).filter(v => typeof v === 'number');
             const rssis = f.map(d => d.rssi).filter(v => typeof v === 'number');
@@ -850,12 +854,35 @@
             const avgDist = dists.length > 0 ? dists.reduce((a,b)=>a+b,0)/dists.length : 0;
             const avgRssi = rssis.length > 0 ? rssis.reduce((a,b)=>a+b,0)/rssis.length : 0;
 
-            return { dist: avgDist, rssi: avgRssi };
+            return { dist: avgDist, rssi: avgRssi, rawDist: dists };
+        }
+
+        function getBoxPlotStats(data) {
+            if (!data || data.length === 0) return null;
+            const sorted = [...data].sort((a, b) => a - b);
+            const q1 = quantile(sorted, 0.25);
+            const median = quantile(sorted, 0.5);
+            const q3 = quantile(sorted, 0.75);
+            const min = sorted[0];
+            const max = sorted[sorted.length - 1];
+            return { min, q1, median, q3, max, items: sorted };
+        }
+
+        function quantile(sorted, q) {
+            const pos = (sorted.length - 1) * q;
+            const base = Math.floor(pos);
+            const rest = pos - base;
+            if (sorted[base + 1] !== undefined) {
+                return sorted[base] + rest * (sorted[base + 1] - sorted[base]);
+            } else {
+                return sorted[base];
+            }
         }
 
         function drawAccuracyChart(data) {
             const ctx = document.getElementById('accuracyChart').getContext('2d');
-            if (accuracyChart) accuracyChart.destroy();
+            const existing = Chart.getChart('accuracyChart');
+            if (existing) existing.destroy();
 
             const maxX = data.length > 0 ? data[data.length-1].x : 100;
             const limit = Math.ceil(maxX * 1.1);
@@ -863,11 +890,38 @@
             const distData = data.map(d => ({ x: d.x, y: d.y }));
             const rssiData = data.map(d => ({ x: d.x, y: d.rssi }));
 
+            const boxData = data.map(d => {
+                const stats = getBoxPlotStats(d.rawDist);
+                if (!stats) return null;
+                return {
+                    x: d.x,
+                    min: stats.min,
+                    q1: stats.q1,
+                    median: stats.median,
+                    q3: stats.q3,
+                    max: stats.max,
+                    items: stats.items
+                };
+            }).filter(d => d !== null);
+
             accuracyChart = new Chart(ctx, {
-                type: 'line',
+                type: 'boxplot',
                 data: {
                     datasets: [
                         {
+                            type: 'boxplot',
+                            label: 'Distribution',
+                            data: boxData,
+                            backgroundColor: 'rgba(13, 148, 136, 0.2)', // Teal-600
+                            borderColor: 'rgba(13, 148, 136, 1)',
+                            borderWidth: 1,
+                            itemRadius: 2,
+                            yAxisID: 'y',
+                            hidden: true,
+                            order: 1
+                        },
+                        {
+                            type: 'line',
                             label: 'Measured Avg Dist (cm)',
                             data: distData,
                             borderColor: 'rgb(79, 70, 229)', // Indigo
@@ -876,9 +930,11 @@
                             pointRadius: 4,
                             fill: false,
                             tension: 0,
-                            yAxisID: 'y'
+                            yAxisID: 'y',
+                            order: 2
                         },
                         {
+                            type: 'line',
                             label: 'Avg RSSI (dBm)',
                             data: rssiData,
                             borderColor: 'rgb(249, 115, 22)', // Orange
@@ -887,9 +943,11 @@
                             pointRadius: 4,
                             fill: false,
                             tension: 0,
-                            yAxisID: 'y1'
+                            yAxisID: 'y1',
+                            order: 3
                         },
                         {
+                            type: 'line',
                             label: 'Ideal (y=x)',
                             data: [{x:0, y:0}, {x:limit, y:limit}],
                             borderColor: 'rgba(148, 163, 184, 0.8)',
@@ -897,7 +955,8 @@
                             borderDash: [5,5],
                             pointRadius: 0,
                             fill: false,
-                            yAxisID: 'y' // Bind to distance axis
+                            yAxisID: 'y',
+                            order: 4
                         }
                     ]
                 },
@@ -926,28 +985,28 @@
                             display: true,
                             position: 'right',
                             title: { display: true, text: 'RSSI (dBm)' },
-                            // Typically RSSI is negative, so we don't force beginAtZero
                             grid: {
-                                drawOnChartArea: false // only want the grid lines for one axis to show up
+                                drawOnChartArea: false
                             }
                         }
                     }
                 }
             });
 
-            // Re-apply toggle states
             syncToggles();
         }
 
         function syncToggles() {
             if (!accuracyChart) return;
-            const t0 = document.getElementById('toggleDist').checked;
-            const t1 = document.getElementById('toggleRssi').checked;
-            const t2 = document.getElementById('toggleIdeal').checked;
+            const tBox = document.getElementById('toggleBox').checked;
+            const tDist = document.getElementById('toggleDist').checked;
+            const tRssi = document.getElementById('toggleRssi').checked;
+            const tIdeal = document.getElementById('toggleIdeal').checked;
 
-            accuracyChart.setDatasetVisibility(0, t0);
-            accuracyChart.setDatasetVisibility(1, t1);
-            accuracyChart.setDatasetVisibility(2, t2);
+            accuracyChart.setDatasetVisibility(0, tBox);
+            accuracyChart.setDatasetVisibility(1, tDist);
+            accuracyChart.setDatasetVisibility(2, tRssi);
+            accuracyChart.setDatasetVisibility(3, tIdeal);
             accuracyChart.update();
         }
 
